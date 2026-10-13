@@ -27,6 +27,6 @@
   },
   "private": true,
   "engines": {
-    "node": "24.15"
+    "node": "22.23.3"
   }
 }
