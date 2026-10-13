@@ -1,0 +1,28 @@
+<div class="breadcrumbs">
+    <a href="/admin/">Administration</a> /
+    <a href="/admin/<%= key %>/"><%= r.plural %></a> /
+    <a href="/admin/<%= key %>/<%= obj.id %>/"><%= r.display(obj) %></a> / Delete
+</div>
+
+<div class="page-header">
+    <h1 class="page-title"><%= title %></h1>
+</div>
+
+<div class="section">
+    <% if (error) { %>
+        <div class="form-error"><%= error %></div>
+        <a href="/admin/<%= key %>/<%= obj.id %>/" class="btn btn-secondary">Back</a>
+    <% } else { %>
+        <p>Are you sure you want to delete the <%= r.label.toLowerCase() %> <strong><%= r.display(obj) %></strong>?</p>
+        <% if (['projects', 'lists', 'tasks'].includes(key)) { %>
+            <p class="muted">Everything inside it (lists, tasks, subtasks, comments) will be deleted too.</p>
+        <% } %>
+        <form method="post">
+            <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+            <div class="btn-row">
+                <button type="submit" class="btn btn-danger">Yes, delete</button>
+                <a href="/admin/<%= key %>/<%= obj.id %>/" class="btn btn-secondary">Cancel</a>
+            </div>
+        </form>
+    <% } %>
+</div>

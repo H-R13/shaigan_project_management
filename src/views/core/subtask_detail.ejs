@@ -1,0 +1,123 @@
+<div class="breadcrumbs">
+    <span class="project-dot" style="background: <%= projectColor(task.project_list.project.id) %>; margin: 0;"></span>
+    <a href="/projects/<%= task.project_list.project.id %>/"><%= task.project_list.project.name %></a>
+    <span>›</span> <a href="/task/<%= task.id %>/"><%= task.title %></a>
+</div>
+
+<div class="page-header">
+    <div>
+        <h1 class="page-title"><%= subtask.title %></h1>
+        <div class="page-subtitle">
+            Subtask of <a href="/task/<%= task.id %>/" class="task-link"><%= task.title %></a> in <%= task.project_list.name %>
+        </div>
+    </div>
+    <div class="btn-row">
+        <% if (perm.edit) { %>
+            <a href="/subtask/<%= subtask.id %>/edit/" class="btn btn-secondary" data-popup><%- icon('edit', 15) %>Edit</a>
+        <% } %>
+        <% if (perm.delete) { %>
+            <a href="/subtask/<%= subtask.id %>/delete/" class="btn btn-secondary" data-popup style="color: var(--stop);"><%- icon('trash', 15) %>Delete</a>
+        <% } %>
+    </div>
+</div>
+
+<% if (!perm.edit) { %>
+<div class="notice notice-readonly">You have <strong>read-only</strong> access to this subtask<%= perm.comment ? '. You can view it and add comments, but not change it.' : '.' %></div>
+<% } %>
+
+<div class="section">
+    <dl class="details">
+        <dt>Status</dt>
+        <dd><%- include('../partials/status_picker', { kind: 'subtask', record: subtask }) %></dd>
+
+        <dt>Assignee</dt>
+        <dd><%- include('../partials/assign_picker', { kind: 'subtask', record: subtask }) %></dd>
+
+        <dt>Access</dt>
+        <dd>
+            <% if (members.length) { %>
+                <span class="team-list">
+                    <% members.forEach(function (m) { %>
+                        <span class="person">
+                            <span class="avatar avatar-sm"><%= m.user.username[0].toUpperCase() %></span><%= m.user.username %><%= m.user_id === user.id ? ' (you)' : '' %>
+                            <span class="access-tag access-<%= m.access %>"><%= m.getAccessDisplay() %></span>
+                        </span>
+                    <% }) %>
+                </span>
+            <% } else { %>
+                <span class="muted-sm">No extra members<%= perm.manageMembers ? ' (add them with Edit)' : '' %></span>
+            <% } %>
+        </dd>
+
+        <dt>Due</dt>
+        <dd><%= formatDate(subtask.due_date) %><% if (isOverdue) { %> <span class="overdue">Overdue</span><% } %></dd>
+
+        <dt>Follow-up</dt>
+        <dd><%- include('../partials/followup', { date: subtask.follow_up_date, status: subtask.status }) %></dd>
+
+        <dt>Task</dt>
+        <dd>
+            <a href="/task/<%= task.id %>/" class="task-link"><%= task.title %></a>
+            &nbsp;<span class="<%= statusClass(task.status) %>"><%= task.getStatusDisplay() %></span>
+            <span class="<%= priorityClass(task.priority) %>"><%= task.getPriorityDisplay() %></span>
+        </dd>
+
+        <dt>Created</dt>
+        <dd><%= formatDateTime(subtask.created_at) %></dd>
+
+        <dt>Last updated</dt>
+        <dd><%= formatDateTime(subtask.updated_at) %></dd>
+    </dl>
+</div>
+
+<div class="section" id="comments">
+    <h2 class="section-title">Comments <span class="panel-meta"><%= comments.length %></span></h2>
+
+    <% if (comments.length) { %>
+        <% comments.forEach(function (c) { %>
+        <div class="item">
+            <div class="item-head">
+                <span class="person">
+                    <span class="avatar avatar-sm"><%= c.user.username[0].toUpperCase() %></span>
+                    <strong><%= c.user.username %></strong>
+                </span>
+                <small class="muted"><%= formatDateTime(c.created_at) %></small>
+            </div>
+            <p class="prewrap comment-text"><%= c.comment %></p>
+        </div>
+        <% }) %>
+    <% } else { %>
+        <p class="muted">No comments on this subtask yet.</p>
+    <% } %>
+
+    <% if (perm.comment) { %>
+    <form method="post" action="/subtask/<%= subtask.id %>/comment/" class="comment-form">
+        <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+        <div class="form-row">
+            <label for="id_comment">Add a comment</label>
+            <textarea id="id_comment" name="comment" rows="3" placeholder="Write a comment about this subtask..." required></textarea>
+        </div>
+        <button type="submit" class="btn btn-primary">Add Comment</button>
+    </form>
+    <% } %>
+</div>
+
+<% if (siblings.length > 1) { %>
+<div class="section">
+    <h2 class="section-title">Other subtasks of this task</h2>
+    <div class="subtask-links">
+        <% siblings.forEach(function (x) { if (x.id === subtask.id) return; %>
+            <a href="/subtask/<%= x.id %>/" class="subtask-link">
+                <span class="subtask-link-title"><%= x.title %></span>
+                <span class="subtask-link-meta">
+                    <%= x.assigned_to ? x.assigned_to.username : 'Unassigned' %> · Due <%= formatDate(x.due_date) %>
+                </span>
+                <span class="<%= statusClass(x.status) %>"><%= x.getStatusDisplay() %></span>
+                <span class="subtask-link-arrow" aria-hidden="true">›</span>
+            </a>
+        <% }) %>
+    </div>
+</div>
+<% } %>
+
+<a href="/task/<%= task.id %>/" class="btn btn-secondary">‹ Back to task</a>

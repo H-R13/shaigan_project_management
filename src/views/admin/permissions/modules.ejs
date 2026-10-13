@@ -1,0 +1,107 @@
+<%- include('_tabs') %>
+
+<div class="section">
+    <h2 class="section-title">Modules</h2>
+    <p class="muted-sm perm-help">
+        Every database table is registered here automatically. You can also add a module for a new feature;
+        its pages then check it with <code>P.can(user, "&lt;key&gt;", "&lt;action&gt;")</code>.
+        <strong>Own records</strong> decides what "Own" means in Role permissions.
+        <strong>Inherit</strong> lets a module borrow actions from its parent record
+        (e.g. anyone who can read a Task can read its Subtasks).
+    </p>
+
+    <% info.forEach(function (x) { const m = x.m; %>
+    <form method="post" action="/admin/permissions/modules/<%= m.key %>/" class="perm-module" id="m-<%= m.key %>">
+        <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+        <div class="perm-module-head">
+            <input type="text" name="label" value="<%= m.label %>" aria-label="Label for <%= m.key %>" maxlength="100">
+            <code><%= m.key %></code>
+            <% if (!x.hasModel) { %><span class="access-tag access-view">no table</span><% } %>
+            <% if (!m.is_system) { %><span class="access-tag access-edit">custom</span><% } %>
+        </div>
+
+        <div class="perm-module-body">
+            <div>
+                <div class="perm-label">Own records are those where…</div>
+                <% if (x.ownerChoices.length) { %>
+                    <% x.ownerChoices.forEach(function (c) { %>
+                        <label class="check-item"><input type="checkbox" name="owner_rules" value="<%= c[0] %>" <%= x.owner.has(c[0]) ? 'checked' : '' %>> <%= c[1] %></label>
+                    <% }) %>
+                    <div class="muted-sm">If none is ticked, "Own" gives nothing on this module.</div>
+                <% } else { %>
+                    <div class="muted-sm">No user links on this module, so "Own" has no effect — use "All".</div>
+                <% } %>
+            </div>
+
+            <% if (x.parents.length) { %>
+            <div>
+                <div class="perm-label">Inherit from parent</div>
+                <select name="inherit_from" aria-label="Inherit from">
+                    <option value="">— none —</option>
+                    <% x.parents.forEach(function (p) { %>
+                        <option value="<%= p.parentKey %>" <%= m.inherit_from === p.parentKey ? 'selected' : '' %>><%= p.parentKey %></option>
+                    <% }) %>
+                </select>
+                <div class="perm-inherit-actions">
+                    <% actionList.forEach(function (a) { %>
+                        <label class="check-item"><input type="checkbox" name="inherit_actions" value="<%= a.key %>" <%= x.inherit.has(a.key) ? 'checked' : '' %>> <%= a.label %></label>
+                    <% }) %>
+                </div>
+            </div>
+            <% } %>
+        </div>
+
+        <div class="btn-row">
+            <button type="submit" class="btn btn-secondary btn-small">Save <%= m.label %></button>
+        </div>
+    </form>
+    <% if (!m.is_system) { %>
+        <form method="post" action="/admin/permissions/modules/<%= m.key %>/delete/" class="perm-delete" onsubmit="return confirm('Delete module <%= m.label %> and all its rules?');">
+            <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+            <button type="submit" class="link-btn danger">Delete module <%= m.label %></button>
+        </form>
+    <% } %>
+    <% }) %>
+
+    <h3 class="perm-subtitle">Add a module</h3>
+    <form method="post" action="/admin/permissions/modules/add/" class="toolbar">
+        <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+        <input type="text" name="key" placeholder="key, e.g. invoice" pattern="[a-z][a-z0-9_]{1,58}" required aria-label="Module key">
+        <input type="text" name="label" placeholder="Label, e.g. Invoice" required maxlength="100" aria-label="Module label">
+        <button type="submit" class="btn btn-primary btn-small">Add module</button>
+    </form>
+</div>
+
+<div class="section" id="actions">
+    <h2 class="section-title">Actions</h2>
+    <p class="muted-sm perm-help">Each action is a column in Role permissions. Add your own (e.g. <em>approve</em>, <em>export</em>) and check it in code with <code>P.can(user, module, "approve", record)</code>.</p>
+    <div class="table-wrap">
+    <table class="data-table">
+        <thead><tr><th>Action</th><th>Key</th><th>Description</th><th></th></tr></thead>
+        <tbody>
+        <% actionList.forEach(function (a) { %>
+            <tr>
+                <td><%= a.label %></td>
+                <td><code><%= a.key %></code></td>
+                <td class="muted"><%= a.description %></td>
+                <td class="text-right">
+                    <% if (!a.is_system) { %>
+                    <form method="post" action="/admin/permissions/actions/<%= a.key %>/delete/" style="display:inline;" onsubmit="return confirm('Delete action <%= a.label %>?');">
+                        <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+                        <button type="submit" class="link-btn danger">Delete</button>
+                    </form>
+                    <% } else { %><span class="muted-sm">built-in</span><% } %>
+                </td>
+            </tr>
+        <% }) %>
+        </tbody>
+    </table>
+    </div>
+    <form method="post" action="/admin/permissions/actions/add/" class="toolbar" style="margin-top: 14px;">
+        <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+        <input type="text" name="key" placeholder="key, e.g. approve" pattern="[a-z][a-z0-9_]{1,58}" required aria-label="Action key">
+        <input type="text" name="label" placeholder="Label, e.g. Approve" required maxlength="100" aria-label="Action label">
+        <input type="text" name="description" placeholder="Description (optional)" maxlength="255" aria-label="Action description">
+        <button type="submit" class="btn btn-primary btn-small">Add action</button>
+    </form>
+</div>

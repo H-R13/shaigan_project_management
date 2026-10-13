@@ -1,0 +1,15 @@
+<div class="breadcrumbs"><a href="/projects/<%= project.id %>/"><%= project.name %></a> / Delete</div>
+<div class="page-header">
+    <h1 class="page-title" data-popup-title>Delete this project?</h1>
+</div>
+
+<div class="section" data-popup-body>
+    <p><strong><%= project.name %></strong> will be deleted, together with all its lists<%= taskCount ? ', ' + taskCount + ' ' + (taskCount === 1 ? 'task' : 'tasks') + ' and their subtasks and comments' : '' %>. This can't be undone.</p>
+    <form method="post" action="/projects/<%= project.id %>/delete/">
+        <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+        <div class="btn-row">
+            <button type="submit" class="btn btn-danger">Delete project</button>
+            <a href="/projects/<%= project.id %>/" class="btn btn-secondary" data-popup-close>Keep it</a>
+        </div>
+    </form>
+</div>

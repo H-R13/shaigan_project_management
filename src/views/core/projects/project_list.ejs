@@ -1,0 +1,26 @@
+<div class="page-header">
+    <div>
+        <h1 class="page-title">Projects</h1>
+        <div class="page-subtitle">Everything you're part of. Open one to see its board.</div>
+    </div>
+    <% if (can('project', 'create')) { %>
+        <a href="/projects/new/" class="btn btn-primary" data-popup><%- icon('plus', 16) %>New project</a>
+    <% } %>
+</div>
+
+<% if (projects.length) { %>
+<div class="project-grid">
+    <% projects.forEach(function (project) { %>
+        <a href="/projects/<%= project.id %>/" class="project-card" style="--project: <%= projectColor(project.id) %>">
+            <div class="project-name"><%= project.name %></div>
+            <div class="project-description"><%= truncate(project.description || 'No description available.', 140) %></div>
+            <div class="project-meta">
+                <span class="<%= statusClass(project.status) %>"><%= project.getStatusDisplay() %></span>
+                <span><%= project.listCount %> lists</span>
+            </div>
+        </a>
+    <% }) %>
+</div>
+<% } else { %>
+<div class="empty-state">You're not part of any project yet. Projects appear here once you're given a task in one.</div>
+<% } %>

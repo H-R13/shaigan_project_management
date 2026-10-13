@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="csrf-token" content="<%= csrfToken %>">
+    <link rel="icon" href="/static/img/favicon.png" type="image/png">
+    <title><%= locals.title ? title + ' | ' : '' %>Shaigan Projects</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Figtree:wght@400;500;600;700;800&display=swap">
+    <link rel="stylesheet" href="/static/style.css?v=22">
+    <script src="/static/app.js?v=7" defer></script>
+</head>
+<body>
+<a class="skip-link" href="#main">Skip to content</a>
+
+<aside class="sidebar" id="sidebar" aria-label="Main navigation">
+    <a href="/" class="brand">
+        <img src="/static/img/shaigan-mark.png" alt="" class="brand-mark" width="36" height="36">
+        <span class="brand-text">Shaigan<small>Project Management</small></span>
+    </a>
+
+    <nav>
+        <a href="/" class="nav-link <%= currentPath === '/' ? 'active' : '' %>">
+            <span class="nav-icon"><%- icon('dashboard') %></span>Home
+        </a>
+        <a href="/tasks/" class="nav-link <%= currentPath.startsWith('/tasks') || currentPath.startsWith('/task/') ? 'active' : '' %>">
+            <span class="nav-icon"><%- icon('tasks') %></span>Tasks
+        </a>
+        <a href="/subtasks/" class="nav-link <%= currentPath.startsWith('/subtask') ? 'active' : '' %>">
+            <span class="nav-icon"><%- icon('subtasks') %></span>Subtasks
+        </a>
+        <a href="/projects/" class="nav-link <%= currentPath === '/projects/' ? 'active' : '' %>">
+            <span class="nav-icon"><%- icon('projects') %></span>Projects
+        </a>
+    </nav>
+
+    <% if (locals.sidebarProjects && sidebarProjects.length) { %>
+        <div class="sidebar-section">Your projects</div>
+        <nav aria-label="Projects">
+            <% sidebarProjects.forEach(function (p) { %>
+                <a href="/projects/<%= p.id %>/" class="nav-link project-link <%= currentPath === '/projects/' + p.id + '/' ? 'active' : '' %>">
+                    <span class="project-dot" style="background: <%= projectColor(p.id) %>"></span><span><%= p.name %></span>
+                </a>
+            <% }) %>
+        </nav>
+    <% } %>
+
+    <% if (can('administration', 'read')) { %>
+        <div class="sidebar-section">Manage</div>
+        <a href="/admin/" class="nav-link <%= currentPath.startsWith('/admin') && !currentPath.startsWith('/admin/permissions') ? 'active' : '' %>">
+            <span class="nav-icon"><%- icon('admin') %></span>Administration
+        </a>
+        <% if (can('group', 'edit')) { %>
+        <a href="/admin/permissions/" class="nav-link <%= currentPath.startsWith('/admin/permissions') ? 'active' : '' %>">
+            <span class="nav-icon"><%- icon('check') %></span>Users &amp; access
+        </a>
+        <% } %>
+    <% } %>
+
+    <div class="sidebar-user">
+        <span class="avatar" aria-hidden="true"><%= (user.displayName()[0] || '?').toUpperCase() %></span>
+        <span class="user-meta">
+            <span class="user-name"><%= user.displayName() %></span>
+            <span class="user-role"><%= roleName %></span>
+        </span>
+        <form method="post" action="/logout/" class="logout-form">
+            <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+            <button type="submit" class="logout" title="Log out" aria-label="Log out"><%- icon('logout', 17) %></button>
+        </form>
+    </div>
+</aside>
+<div class="sidebar-backdrop" data-nav-close></div>
+
+<div class="shell">
+    <header class="topbar">
+        <button type="button" class="menu-btn" aria-controls="sidebar" aria-expanded="false" aria-label="Open menu" data-nav-toggle><%- icon('menu') %></button>
+        <form action="/tasks/" method="get" class="topbar-search" role="search">
+            <%- icon('search', 16) %>
+            <input type="search" name="q" placeholder="Search tasks" aria-label="Search tasks" value="<%= currentPath === '/tasks/' && request.query.q ? request.query.q : '' %>">
+        </form>
+        <div class="topbar-actions">
+            <% if (can('task', 'create')) { %>
+                <a href="/tasks/new/" class="btn btn-primary" data-popup><%- icon('plus', 16) %><span class="btn-label">New task</span></a>
+            <% } %>
+        </div>
+    </header>
+
+    <main class="main" id="main">
+        <%- body %>
+    </main>
+</div>
+
+<%- include('partials/messages') %>
+
+<dialog class="popup" id="popup" aria-labelledby="popup-title">
+    <div class="popup-head">
+        <h2 class="popup-title" id="popup-title"></h2>
+        <button type="button" class="popup-close" aria-label="Close" data-popup-close>&times;</button>
+    </div>
+    <div class="popup-body" id="popup-body"></div>
+</dialog>
+
+</body>
+</html>

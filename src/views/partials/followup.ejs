@@ -1,0 +1,10 @@
+<%# Follow-up date with a "Today" / "Missed" label for open items %>
+<% if (date) {
+     const t = todayISO();
+     const open = status !== 'completed' && status !== 'cancelled'; %>
+    <span class="nowrap"><%= formatDate(date) %></span>
+    <% if (open && date < t) { %><span class="fu-tag fu-missed">Missed</span>
+    <% } else if (open && date === t) { %><span class="fu-tag fu-today">Today</span><% } %>
+<% } else { %>
+    <span class="muted-sm">—</span>
+<% } %>

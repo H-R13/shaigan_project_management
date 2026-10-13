@@ -1,0 +1,56 @@
+<%- include('_tabs') %>
+
+<div class="section">
+    <form method="get" class="toolbar">
+        <label for="role-pick" class="muted">Role</label>
+        <select id="role-pick" name="role" onchange="this.form.submit()">
+            <% roleList.forEach(function (g) { %>
+                <option value="<%= g.id %>" <%= role && g.id === role.id ? 'selected' : '' %>><%= g.name %></option>
+            <% }) %>
+        </select>
+        <label for="module-pick" class="muted">Module</label>
+        <select id="module-pick" name="module" onchange="this.form.submit()">
+            <% moduleList.forEach(function (m) { %>
+                <option value="<%= m.key %>" <%= mod && m.key === mod.key ? 'selected' : '' %>><%= m.label %></option>
+            <% }) %>
+        </select>
+        <noscript><button type="submit" class="btn btn-secondary btn-small">Show</button></noscript>
+    </form>
+
+    <% if (role && mod) { %>
+    <p class="muted-sm perm-help">
+        How each field of <strong><%= mod.label %></strong> behaves on forms for <strong><%= role.name %></strong>.
+        If a user has several roles, a field is only limited when <em>every</em> one of their roles limits it.
+        Also: <strong>assigned_to_id</strong> needs the <em>Assign</em> permission, and <strong>status</strong> needs
+        <em>Change status</em> (and <em>Change completed</em> once the record is completed).
+    </p>
+    <form method="post">
+        <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+        <input type="hidden" name="role_id" value="<%= role.id %>">
+        <input type="hidden" name="module" value="<%= mod.key %>">
+        <div class="table-wrap">
+        <table class="data-table perm-fields">
+            <thead><tr><th>Field</th><th>Behaviour</th></tr></thead>
+            <tbody>
+            <% fields.forEach(function (f) { const v = current.get(f) || ''; %>
+                <tr>
+                    <td><code><%= f %></code></td>
+                    <td>
+                        <select name="f__<%= f %>" aria-label="<%= f %>">
+                            <option value="">Editable</option>
+                            <% FIELD_MODES.forEach(function (c) { %>
+                                <option value="<%= c[0] %>" <%= v === c[0] ? 'selected' : '' %>><%= c[1] %></option>
+                            <% }) %>
+                        </select>
+                    </td>
+                </tr>
+            <% }) %>
+            </tbody>
+        </table>
+        </div>
+        <div class="btn-row" style="margin-top: 16px;">
+            <button type="submit" class="btn btn-primary">Save field rules</button>
+        </div>
+    </form>
+    <% } %>
+</div>

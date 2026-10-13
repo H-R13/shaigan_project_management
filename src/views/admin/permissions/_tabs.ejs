@@ -1,0 +1,22 @@
+<div class="breadcrumbs"><a href="/admin/">Administration</a> / Permissions</div>
+
+<div class="page-header">
+    <div>
+        <h1 class="page-title">Permissions</h1>
+        <div class="page-subtitle">Decide what each role can do. Changes apply as soon as you save.</div>
+    </div>
+</div>
+
+<% const advanced = ['advanced', 'fields', 'modules'].includes(tab); %>
+<nav class="perm-tabs" aria-label="Permission sections">
+    <a href="/admin/permissions/">Roles</a>
+    <a href="/admin/permissions/restrictions/" class="<%= tab === 'restrictions' ? 'active' : '' %>">Limit users to projects</a>
+    <a href="/admin/permissions/grid/" class="<%= advanced ? 'active' : '' %>">Advanced</a>
+</nav>
+<% if (advanced) { %>
+<nav class="perm-subtabs" aria-label="Advanced settings">
+    <a href="/admin/permissions/grid/" class="<%= tab === 'advanced' ? 'active' : '' %>">Full grid</a>
+    <a href="/admin/permissions/fields/" class="<%= tab === 'fields' ? 'active' : '' %>">Field rules</a>
+    <a href="/admin/permissions/modules/" class="<%= tab === 'modules' ? 'active' : '' %>">Modules &amp; actions</a>
+</nav>
+<% } %>

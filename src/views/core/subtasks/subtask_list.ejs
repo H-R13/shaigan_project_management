@@ -1,0 +1,95 @@
+<div class="page-header">
+    <div>
+        <h1 class="page-title"><%= isTM ? 'My subtasks' : 'Subtasks' %></h1>
+        <div class="page-subtitle">
+            <%= subtasks.length %> <%= subtasks.length === 1 ? 'subtask' : 'subtasks' %><%= filtered ? ' match your filters' : (isTM ? ' assigned to you' : ' you can access') %>
+        </div>
+    </div>
+</div>
+
+<section class="panel">
+    <form method="get" class="filters" role="search">
+        <label class="search-box">
+            <%- icon('search', 16) %>
+            <input type="search" name="q" value="<%= q %>" placeholder="Search subtasks..." aria-label="Search subtasks">
+        </label>
+        <select name="project" aria-label="Project">
+            <option value="">All projects</option>
+            <% projects.forEach(function (p) { %>
+                <option value="<%= p.id %>" <%= String(p.id) === f.project ? 'selected' : '' %>><%= p.name %></option>
+            <% }) %>
+        </select>
+        <select name="status" aria-label="Status">
+            <option value="">All statuses</option>
+            <% SUBTASK_STATUS.forEach(function (c) { %>
+                <option value="<%= c[0] %>" <%= c[0] === f.status ? 'selected' : '' %>><%= c[1] %></option>
+            <% }) %>
+        </select>
+        <% if (!isTM) { %>
+        <label class="check">
+            <input type="checkbox" name="mine" value="1" <%= f.mine ? 'checked' : '' %>> Assigned to me
+        </label>
+        <% } %>
+        <button type="submit" class="btn btn-primary btn-small">Apply</button>
+        <% if (filtered) { %><a href="/subtasks/" class="clear-link">Clear</a><% } %>
+    </form>
+
+    <% if (subtasks.length) { %>
+    <div class="table-wrap">
+    <table class="data-table">
+        <thead>
+            <tr>
+                <th>Subtask</th>
+                <th>Task</th>
+                <th>Assignee</th>
+                <th>Status</th>
+                <th>Due</th>
+                <th>Follow-up</th>
+                <th>Comments</th>
+                <th></th>
+            </tr>
+        </thead>
+        <tbody>
+        <% subtasks.forEach(function (s) { %>
+            <tr class="<%= s.status === 'completed' ? 'is-done' : '' %>">
+                <td>
+                    <div class="cell-title"><a href="/subtask/<%= s.id %>/" class="task-link"><%= s.title %></a></div>
+                    <div class="cell-sub"><span class="project-dot" style="background: <%= projectColor(s.task.project_list.project.id) %>; margin: 0;"></span><%= s.task.project_list.project.name %></div>
+                </td>
+                <td><a href="/task/<%= s.task.id %>/" class="task-link"><%= s.task.title %></a></td>
+                <td><%- include('../../partials/assign_picker', { kind: 'subtask', record: s }) %></td>
+                <td><%- include('../../partials/status_picker', { kind: 'subtask', record: s }) %></td>
+                <td class="nowrap">
+                    <%= formatDate(s.due_date) %>
+                    <% if (s.isOverdue) { %><span class="overdue">Overdue</span><% } %>
+                </td>
+                <td class="nowrap"><%- include('../../partials/followup', { date: s.follow_up_date, status: s.status }) %></td>
+                <td class="comment-cell">
+                    <% if (s.commentCount) { %>
+                        <a href="/subtask/<%= s.id %>/#comments" class="task-link"><%= s.commentCount %> <%= s.commentCount === 1 ? 'comment' : 'comments' %></a>
+                        <div class="cell-sub comment-preview" title="<%= s.latestComment.comment %>">
+                            <strong><%= s.latestComment.user ? s.latestComment.user.username : '?' %>:</strong>
+                            <%= s.latestComment.comment.length > 60 ? s.latestComment.comment.slice(0, 60) + '…' : s.latestComment.comment %>
+                        </div>
+                    <% } else { %>
+                        <a href="/subtask/<%= s.id %>/#comments" class="muted-sm">No comments</a>
+                    <% } %>
+                </td>
+                <td class="text-right">
+                    <% if (canEditSubtask(s)) { %>
+                        <a href="/subtask/<%= s.id %>/edit/" class="btn btn-secondary btn-small" data-popup>Edit</a>
+                    <% } else if (accessOf(s) === 'view') { %>
+                        <span class="access-tag access-view">Read only</span>
+                    <% } %>
+                </td>
+            </tr>
+        <% }) %>
+        </tbody>
+    </table>
+    </div>
+    <% } else { %>
+        <div class="empty-state">
+            <%= filtered ? 'No subtasks match your filters.' : (isTM ? 'No subtasks are assigned to you yet.' : 'No subtasks available yet.') %>
+        </div>
+    <% } %>
+</section>

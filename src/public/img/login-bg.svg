@@ -1,0 +1,88 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1600 900" preserveAspectRatio="xMidYMid slice">
+  <defs>
+    <linearGradient id="base" x1="0" y1="0" x2="1" y2="0.35">
+      <stop offset="0" stop-color="#0a3470"/>
+      <stop offset="0.45" stop-color="#11519c"/>
+      <stop offset="0.8" stop-color="#1f6cbc"/>
+      <stop offset="1" stop-color="#3d8fd8"/>
+    </linearGradient>
+    <radialGradient id="glowRight" cx="0.86" cy="0.42" r="0.55">
+      <stop offset="0" stop-color="#7cc0f2" stop-opacity="0.55"/>
+      <stop offset="0.55" stop-color="#4b98dd" stop-opacity="0.18"/>
+      <stop offset="1" stop-color="#1f6cbc" stop-opacity="0"/>
+    </radialGradient>
+    <radialGradient id="shadeTopLeft" cx="0.08" cy="0.05" r="0.7">
+      <stop offset="0" stop-color="#05214d" stop-opacity="0.65"/>
+      <stop offset="1" stop-color="#05214d" stop-opacity="0"/>
+    </radialGradient>
+    <radialGradient id="shadeBottom" cx="0.35" cy="1.05" r="0.6">
+      <stop offset="0" stop-color="#062a5c" stop-opacity="0.55"/>
+      <stop offset="1" stop-color="#062a5c" stop-opacity="0"/>
+    </radialGradient>
+    <linearGradient id="sheen" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#ffffff" stop-opacity="0"/>
+      <stop offset="0.5" stop-color="#ffffff" stop-opacity="0.07"/>
+      <stop offset="1" stop-color="#ffffff" stop-opacity="0"/>
+    </linearGradient>
+    <!-- ribbon -->
+    <linearGradient id="blueBand" x1="0.05" y1="1" x2="0.75" y2="0.2">
+      <stop offset="0" stop-color="#0d4a96"/>
+      <stop offset="0.35" stop-color="#2a82d4"/>
+      <stop offset="0.6" stop-color="#7fc1f3"/>
+      <stop offset="0.8" stop-color="#3a91dc"/>
+      <stop offset="1" stop-color="#1c66b6" stop-opacity="0.6"/>
+    </linearGradient>
+    <linearGradient id="silver" x1="0.15" y1="1" x2="0.62" y2="0.35">
+      <stop offset="0" stop-color="#4e5d72"/>
+      <stop offset="0.22" stop-color="#9aa7b8"/>
+      <stop offset="0.42" stop-color="#eef3f8"/>
+      <stop offset="0.52" stop-color="#ffffff"/>
+      <stop offset="0.66" stop-color="#b7c2cf"/>
+      <stop offset="0.84" stop-color="#7d8ba0"/>
+      <stop offset="1" stop-color="#c9d3df"/>
+    </linearGradient>
+    <linearGradient id="edgeLight" x1="0" y1="1" x2="1" y2="0">
+      <stop offset="0" stop-color="#bfe3ff" stop-opacity="0"/>
+      <stop offset="0.45" stop-color="#d8eeff" stop-opacity="0.9"/>
+      <stop offset="1" stop-color="#bfe3ff" stop-opacity="0.1"/>
+    </linearGradient>
+    <linearGradient id="fadeGrad" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0" stop-color="#fff"/>
+      <stop offset="0.55" stop-color="#fff"/>
+      <stop offset="0.7" stop-color="#fff" stop-opacity="0"/>
+    </linearGradient>
+    <mask id="fadeRight" maskUnits="userSpaceOnUse" x="0" y="0" width="1600" height="900"><rect width="1600" height="900" fill="url(#fadeGrad)"/></mask>
+    <filter id="soft" x="-10%" y="-10%" width="120%" height="120%"><feGaussianBlur stdDeviation="1.6"/></filter>
+    <filter id="softer" x="-10%" y="-10%" width="120%" height="120%"><feGaussianBlur stdDeviation="3"/></filter>
+    <filter id="glow" x="-20%" y="-50%" width="140%" height="200%"><feGaussianBlur stdDeviation="7"/></filter>
+    <filter id="haze" x="-20%" y="-50%" width="140%" height="200%"><feGaussianBlur stdDeviation="22"/></filter>
+  </defs>
+
+  <rect width="1600" height="900" fill="url(#base)"/>
+  <rect width="1600" height="900" fill="url(#glowRight)"/>
+  <rect width="1600" height="900" fill="url(#shadeTopLeft)"/>
+  <rect width="1600" height="900" fill="url(#shadeBottom)"/>
+  <!-- big soft waves in the background -->
+  <path d="M-50 640 C 260 520, 520 600, 820 520 S 1350 300, 1700 340 L1700 420 C 1360 380, 1120 560, 820 610 S 260 640, -50 760 Z" fill="#5aa6ea" opacity="0.10" filter="url(#haze)"/>
+  <path d="M900 -40 C 1150 120, 1250 300, 1700 260 L1700 -40 Z" fill="#9fd2ff" opacity="0.10" filter="url(#haze)"/>
+
+  <g mask="url(#fadeRight)">
+    <!-- shadow under the ribbon -->
+    <path d="M90 900 C 210 760, 380 650, 600 620 C 800 592, 980 600, 1130 612 L1130 700 C 960 690, 760 700, 640 760 C 540 810, 480 860, 470 900 Z"
+          fill="#041d45" opacity="0.65" filter="url(#haze)"/>
+    <!-- blue band: rises from the bottom and rolls over to the right -->
+    <path d="M0 880 C 120 720, 300 600, 540 566 C 760 535, 960 560, 1130 590
+             L1130 622 C 960 600, 790 600, 640 628 C 470 660, 330 760, 250 900 L0 900 Z"
+          fill="url(#blueBand)" filter="url(#softer)"/>
+    <!-- silver band: wide at the bottom, narrowing as it curls away -->
+    <path d="M250 900 C 330 760, 470 660, 640 628 C 790 600, 960 600, 1130 622
+             L1130 662 C 980 650, 840 664, 740 708 C 630 756, 560 830, 540 900 Z"
+          fill="url(#silver)" filter="url(#soft)"/>
+    <!-- glossy highlight running along the silver -->
+    <path d="M300 900 C 380 770, 510 685, 660 655 C 800 628, 960 628, 1120 640"
+          fill="none" stroke="#ffffff" stroke-opacity="0.75" stroke-width="10" stroke-linecap="round" filter="url(#glow)"/>
+    <!-- light on the fold between blue and silver -->
+    <path d="M250 900 C 330 760, 470 660, 640 628 C 790 600, 960 600, 1130 622"
+          fill="none" stroke="url(#edgeLight)" stroke-width="3" filter="url(#soft)"/>
+  </g>
+</svg>

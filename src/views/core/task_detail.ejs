@@ -1,0 +1,124 @@
+<% const color = projectColor(task.project_list.project.id);
+   const done = subtasks.filter(function (x) { return x.status === 'completed'; }).length;
+   const pct = subtasks.length ? Math.round(done / subtasks.length * 100) : 0;
+   const today = todayISO();
+   const late = task.due_date && task.due_date < today && task.status !== 'completed' && task.status !== 'cancelled'; %>
+<div class="breadcrumbs">
+    <span class="project-dot" style="background: <%= color %>; margin: 0;"></span>
+    <a href="/projects/<%= task.project_list.project.id %>/"><%= task.project_list.project.name %></a>
+    <span>›</span> <span><%= task.project_list.name %></span>
+</div>
+
+<div class="page-header">
+    <div>
+        <h1 class="page-title"><%= task.title %></h1>
+        <div class="page-subtitle">Created by <%= task.created_by ? task.created_by.username : 'someone' %> on <%= formatDateTime(task.created_at) %></div>
+    </div>
+    <div class="btn-row">
+        <% if (perm.editTask) { %>
+            <a href="/task/<%= task.id %>/edit/" class="btn btn-secondary" data-popup><%- icon('edit', 15) %>Edit</a>
+        <% } %>
+        <% if (perm.deleteTask) { %>
+            <a href="/task/<%= task.id %>/delete/" class="btn btn-secondary" data-popup style="color: var(--stop);"><%- icon('trash', 15) %>Delete</a>
+        <% } %>
+    </div>
+</div>
+
+<div class="detail-layout">
+    <div class="detail-main">
+        <section class="section">
+            <h2 class="section-title">Description</h2>
+            <div class="description prewrap <%= task.description ? '' : 'is-empty' %>"><%= task.description || 'No description yet.' %></div>
+        </section>
+
+        <section class="section">
+            <div class="panel-head">
+                <h2 class="panel-title">Subtasks</h2>
+                <% if (subtasks.length) { %><span class="panel-meta"><%= done %> of <%= subtasks.length %> done</span><% } %>
+                <% if (perm.createSubtask) { %>
+                    <a href="/task/<%= task.id %>/subtask/create/" class="btn btn-secondary btn-small" data-popup style="margin-left: auto;"><%- icon('plus', 14) %>Add subtask</a>
+                <% } %>
+            </div>
+            <% if (subtasks.length) { %>
+            <div class="progress" style="margin-bottom: 14px;" role="progressbar" aria-label="Subtasks completed" aria-valuenow="<%= pct %>" aria-valuemin="0" aria-valuemax="100">
+                <span class="progress-bar" style="width: <%= pct %>%"></span>
+            </div>
+            <div class="subtask-links">
+                <% subtasks.forEach(function (x) { %>
+                    <div class="subtask-link <%= x.status === 'completed' ? 'is-done' : '' %>">
+                        <span class="subtask-link-title"><a href="/subtask/<%= x.id %>/"><%= x.title %></a></span>
+                        <span class="subtask-link-meta">
+                            <%= x.assigned_to ? x.assigned_to.username : 'Unassigned' %><%= x.assigned_to_id === user.id ? ' (you)' : '' %><% if (x.due_date) { %>, due <%= formatDate(x.due_date) %><% } %><% if (x.commentCount) { %>, <%= x.commentCount %> <%= x.commentCount === 1 ? 'comment' : 'comments' %><% } %>
+                        </span>
+                        <%- include('../partials/status_picker', { kind: 'subtask', record: x }) %>
+                        <span class="subtask-link-arrow" aria-hidden="true">›</span>
+                    </div>
+                <% }) %>
+            </div>
+            <% } else { %>
+                <div class="empty-state">No subtasks yet<%= perm.createSubtask ? '. Split the work up with "Add subtask".' : '.' %></div>
+            <% } %>
+        </section>
+
+        <section class="section" id="comments">
+            <div class="panel-head">
+                <h2 class="panel-title">Comments</h2>
+                <% if (comments.length) { %><span class="panel-meta"><%= comments.length %></span><% } %>
+            </div>
+            <% if (comments.length) { %>
+                <% comments.forEach(function (comment) { %>
+                <div class="item">
+                    <div class="item-head">
+                        <span class="person"><span class="avatar avatar-sm"><%= comment.user.username[0].toUpperCase() %></span><strong><%= comment.user.username %></strong></span>
+                        <small class="muted-sm"><%= formatDateTime(comment.created_at) %></small>
+                    </div>
+                    <p class="prewrap comment-text"><%= comment.comment %></p>
+                </div>
+                <% }) %>
+            <% } else { %>
+                <p class="muted">No comments yet.</p>
+            <% } %>
+
+            <% if (perm.comment) { %>
+            <form method="post" action="/task/<%= task.id %>/comment/" class="comment-form">
+                <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+                <div class="form-row">
+                    <label for="id_comment" class="sr-only">Comment</label>
+                    <textarea id="id_comment" name="comment" rows="3" placeholder="Write a comment…" required></textarea>
+                </div>
+                <button type="submit" class="btn btn-primary">Add comment</button>
+            </form>
+            <% } %>
+        </section>
+    </div>
+
+    <aside class="section" aria-label="Task details">
+        <dl class="details">
+            <dt>Status</dt><dd><%- include('../partials/status_picker', { kind: 'task', record: task }) %></dd>
+            <dt>Assignee</dt><dd><%- include('../partials/assign_picker', { kind: 'task', record: task }) %></dd>
+            <dt>Priority</dt><dd><span class="<%= priorityClass(task.priority) %>"><%= task.getPriorityDisplay() %></span></dd>
+            <dt>Starts</dt><dd><%= formatDate(task.start_date) %></dd>
+            <dt>Due</dt><dd><%= formatDate(task.due_date) %><% if (late) { %><span class="overdue">Overdue</span><% } %></dd>
+            <dt>Follow-up</dt><dd><%- include('../partials/followup', { date: task.follow_up_date, status: task.status }) %></dd>
+            <dt>Project</dt><dd><a href="/projects/<%= task.project_list.project.id %>/" class="task-link"><%= task.project_list.project.name %></a></dd>
+            <dt>List</dt><dd><%= task.project_list.name %></dd>
+            <% const people = [];
+               if (task.assigned_to) people.push(task.assigned_to);
+               subtasks.forEach(function (x) {
+                   if (x.assigned_to && !people.some(function (p) { return p.id === x.assigned_to.id; })) people.push(x.assigned_to);
+               }); %>
+            <dt>Team</dt>
+            <dd>
+                <% if (people.length) { %>
+                    <span class="team-list">
+                        <% people.forEach(function (p) { %>
+                            <span class="person"><span class="avatar avatar-sm"><%= p.username[0].toUpperCase() %></span><%= p.username %></span>
+                        <% }) %>
+                    </span>
+                <% } else { %>
+                    <span class="muted-sm">No one yet</span>
+                <% } %>
+            </dd>
+        </dl>
+    </aside>
+</div>

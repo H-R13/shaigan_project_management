@@ -1,0 +1,118 @@
+<% const color = projectColor(project.id);
+   const canAdd = can('task', 'create');
+   const today = todayISO(); %>
+<div class="breadcrumbs"><a href="/projects/">Projects</a> / <%= project.name %></div>
+
+<div class="page-header" style="--project: <%= color %>">
+    <div class="project-hero">
+        <span class="project-hero-mark" aria-hidden="true"></span>
+        <div>
+            <h1 class="page-title"><%= project.name %></h1>
+            <div class="page-subtitle"><%= project.description || 'No description yet.' %></div>
+        </div>
+    </div>
+    <div class="btn-row">
+        <span class="<%= statusClass(project.status) %>"><%= project.getStatusDisplay() %></span>
+        <% if (can('project', 'edit', project)) { %>
+            <a href="/projects/<%= project.id %>/edit/" class="btn btn-secondary" data-popup><%- icon('edit', 15) %>Edit</a>
+        <% } %>
+        <% if (can('project', 'delete', project)) { %>
+            <a href="/projects/<%= project.id %>/delete/" class="btn btn-secondary" data-popup style="color: var(--stop);"><%- icon('trash', 15) %>Delete</a>
+        <% } %>
+    </div>
+</div>
+
+<div class="cards">
+    <div class="card">
+        <div class="card-title">Starts</div>
+        <div class="card-value"><%= formatDate(project.start_date) %></div>
+    </div>
+    <div class="card">
+        <div class="card-title">Ends</div>
+        <div class="card-value"><%= formatDate(project.end_date) %></div>
+    </div>
+    <div class="card">
+        <div class="card-title">Lists</div>
+        <div class="card-value"><%= lists.length %></div>
+    </div>
+    <div class="card">
+        <div class="card-title">Tasks you can see</div>
+        <div class="card-value"><%= lists.reduce(function (n, l) { return n + l.board_tasks.length; }, 0) %></div>
+    </div>
+</div>
+
+<% if (lists.length) { %>
+<p class="muted-sm" style="margin: -8px 0 12px;">Drag a card to another list to move it. Changes save straight away.</p>
+<div class="board" style="--project: <%= color %>" data-board>
+    <% lists.forEach(function (projectList) { %>
+    <section class="board-column" data-list-id="<%= projectList.id %>" aria-label="<%= projectList.name %>">
+        <div class="column-header">
+            <h2 class="column-title" style="margin: 0;" data-list-name><%= projectList.name %></h2>
+            <span class="column-count" data-count><%= projectList.board_tasks.length %></span>
+            <% if (can('projectlist', 'edit', projectList)) { %>
+                <button type="button" class="column-btn" data-list-rename="/api/list/<%= projectList.id %>/rename" title="Rename list" aria-label="Rename <%= projectList.name %>"><%- icon('edit', 14) %></button>
+            <% } %>
+            <% if (can('projectlist', 'delete', projectList)) { %>
+                <button type="button" class="column-btn" data-list-delete="/api/list/<%= projectList.id %>/delete" title="Delete list" aria-label="Delete <%= projectList.name %>"><%- icon('trash', 14) %></button>
+            <% } %>
+        </div>
+
+        <div class="column-body" data-column-body>
+            <% projectList.board_tasks.forEach(function (task) {
+                 const late = task.due_date && task.due_date < today && task.status !== 'completed' && task.status !== 'cancelled'; %>
+            <article class="task-card <%= task.status === 'completed' ? 'is-done' : '' %>" data-task-id="<%= task.id %>"
+                     <% if (canMove(task)) { %>draggable="true" data-move-url="/api/task/<%= task.id %>/move"<% } %>>
+                <div class="task-title"><a href="/task/<%= task.id %>/" class="card-link"><%= task.title %></a></div>
+                <div class="task-footer">
+                    <%- include('../../partials/status_picker', { kind: 'task', record: task }) %>
+                    <span class="<%= priorityClass(task.priority) %>"><%= task.getPriorityDisplay() %></span>
+                    <% if (task.due_date) { %><span class="task-due <%= late ? 'is-late' : '' %>"><%= formatDate(task.due_date) %></span><% } %>
+                    <span class="task-assignee">
+                        <% if (task.assigned_to) { %><span class="avatar avatar-sm" title="<%= task.assigned_to.username %>"><%= task.assigned_to.username[0].toUpperCase() %></span><% } %>
+                    </span>
+                </div>
+            </article>
+            <% }) %>
+            <div class="empty-column" data-empty <%= projectList.board_tasks.length ? 'hidden' : '' %>>Nothing here yet</div>
+        </div>
+
+        <% if (canAdd) { %>
+        <div class="quick-add" data-quick-add data-url="/api/list/<%= projectList.id %>/tasks">
+            <button type="button" class="quick-add-toggle"><%- icon('plus', 15) %> Add a task</button>
+            <form class="quick-add-form">
+                <label class="sr-only" for="qa-<%= projectList.id %>">Task title for <%= projectList.name %></label>
+                <textarea id="qa-<%= projectList.id %>" placeholder="What needs to be done?" maxlength="255"></textarea>
+                <div class="quick-add-actions">
+                    <button type="submit" class="btn btn-primary btn-small">Add task</button>
+                    <button type="button" class="btn btn-secondary btn-small" data-quick-cancel>Cancel</button>
+                    <span>Press Enter to add</span>
+                </div>
+            </form>
+        </div>
+        <% } %>
+    </section>
+    <% }) %>
+    <% if (can('projectlist', 'create')) { %>
+    <section class="board-column add-list-column">
+        <form class="add-list" data-add-list="/api/project/<%= project.id %>/lists">
+            <label class="sr-only" for="new-list-name">New list name</label>
+            <input type="text" id="new-list-name" name="name" maxlength="200" placeholder="+ Add a list" autocomplete="off">
+            <button type="submit" class="btn btn-primary btn-small">Add list</button>
+        </form>
+    </section>
+    <% } %>
+</div>
+<% } else { %>
+    <div class="empty-state">This project has no lists yet<%= can('projectlist', 'create') ? ' — add the first one below' : '' %>.</div>
+    <% if (can('projectlist', 'create')) { %><div class="board" data-board>
+    <% if (can('projectlist', 'create')) { %>
+    <section class="board-column add-list-column">
+        <form class="add-list" data-add-list="/api/project/<%= project.id %>/lists">
+            <label class="sr-only" for="new-list-name">New list name</label>
+            <input type="text" id="new-list-name" name="name" maxlength="200" placeholder="+ Add a list" autocomplete="off">
+            <button type="submit" class="btn btn-primary btn-small">Add list</button>
+        </form>
+    </section>
+    <% } %>
+    </div><% } %>
+<% } %>

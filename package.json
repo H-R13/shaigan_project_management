@@ -1,0 +1,32 @@
+{
+  "name": "shaigan-project-management",
+  "version": "1.0.0",
+  "description": "Shaigan Project Management — Node.js + Express + SQL port of the Django project",
+  "main": "src/server.js",
+  "scripts": {
+    "start": "node src/server.js",
+    "dev": "node --watch src/server.js",
+    "db:init": "node scripts/init-db.js",
+    "createsuperuser": "node scripts/create-superuser.js",
+    "import:django": "node scripts/import-django.js",
+    "test": "node --test"
+  },
+  "dependencies": {
+    "connect-session-sequelize": "^8.0.6",
+    "dotenv": "^18.0.5",
+    "ejs": "^7.0.1",
+    "express": "^5.2.1",
+    "express-ejs-layouts": "^2.5.1",
+    "express-session": "^1.19.0",
+    "mysql2": "^3.24.5",
+    "sequelize": "^6.37.8",
+    "tedious": "^20.3.3"
+  },
+  "optionalDependencies": {
+    "sqlite3": "^6.0.1"
+  },
+  "private": true,
+  "engines": {
+    "node": ">=18"
+  }
+}

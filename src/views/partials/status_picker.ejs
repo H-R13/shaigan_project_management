@@ -1,0 +1,5 @@
+<%# Status as a pill. If this user may change it, the pill is a picker that
+    saves straight away (app.js). Params: kind ("task" | "subtask"), record %>
+<% const _choices = kind === 'task' ? TASK_STATUS_CHOICES : SUBTASK_STATUS_CHOICES;
+   const _label = (_choices.find(function (c) { return c[0] === record.status; }) || [null, record.status])[1]; %>
+<% if (canSet(kind, 'status', record)) { %><select class="status-picker <%= statusClass(record.status) %>" data-url="/api/<%= kind %>/<%= record.id %>/status" aria-label="Status of <%= record.title %>"><% _choices.forEach(function (c) { %><option value="<%= c[0] %>" <%= c[0] === record.status ? 'selected' : '' %>><%= c[1] %></option><% }) %></select><% } else { %><span class="<%= statusClass(record.status) %>"><%= _label %></span><% } %>

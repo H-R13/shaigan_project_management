@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sign in | Shaigan Project Management Portal</title>
+    <link rel="icon" href="/static/img/favicon.png" type="image/png">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Figtree:wght@400;500;600;700;800&display=swap">
+    <link rel="stylesheet" href="/static/style.css?v=22">
+</head>
+<body class="login-body">
+
+<main class="login">
+    <section class="login-intro">
+        <div class="login-logo">
+            <img src="/static/img/shaigan-mark.png" alt="" width="58" height="58">
+            <span>SHAIGAN</span>
+        </div>
+
+        <div class="login-pitch">
+            <h2 class="login-headline">Plan. Track. <span>Achieve.</span></h2>
+            <p class="login-lead">Your project management portal<br>for better coordination and results.</p>
+            <ul class="login-features">
+                <li>
+                    <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3.5" y="3.5" width="17" height="17" rx="2.5"/><path d="M8 9h8M8 12.5h8M8 16h5"/></svg>
+                    Manage tasks
+                </li>
+                <li>
+                    <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3.5 20.5h17"/><path d="M4 20.5V3.5"/><path d="m6.5 16 4-4.5 3 2.5 5.5-6.5"/><path d="M15.5 7.5H19V11"/><circle cx="10.5" cy="11.5" r="1.1"/><circle cx="13.5" cy="14" r="1.1"/></svg>
+                    Track progress
+                </li>
+                <li>
+                    <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3.5 8V5.5a2 2 0 0 1 2-2H8M16 3.5h2.5a2 2 0 0 1 2 2V8M20.5 16v2.5a2 2 0 0 1-2 2H16M8 20.5H5.5a2 2 0 0 1-2-2V16"/><circle cx="12" cy="10" r="2.6"/><path d="M7.5 17c.8-2 2.5-3.2 4.5-3.2s3.7 1.2 4.5 3.2"/></svg>
+                    Stay connected
+                </li>
+            </ul>
+        </div>
+
+        <p class="login-copyright">&copy; <%= new Date().getFullYear() %> Shaigan Pharmaceutical. All rights reserved.</p>
+    </section>
+
+    <section class="login-main">
+        <div class="login-card">
+            <div class="login-card-logo">
+                <img src="/static/img/shaigan-mark.png" alt="" width="40" height="40">
+                <span>SHAIGAN</span>
+            </div>
+            <h1 class="login-title">Welcome back</h1>
+            <p class="login-subtitle">Sign in to your project workspace.</p>
+
+            <% if (error) { %>
+                <div class="form-error" role="alert">That username and password don't match. Check them and try again.</div>
+            <% } %>
+
+            <form method="post" action="/login/">
+                <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+                <input type="hidden" name="next" value="<%= next %>">
+
+                <div class="login-field">
+                    <label for="id_username">Username</label>
+                    <div class="login-input">
+                        <svg class="login-input-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 3.6-7 8-7s8 3 8 7"/></svg>
+                        <input type="text" name="username" id="id_username" value="<%= username %>" placeholder="Enter your username" autocomplete="username" autocapitalize="none" spellcheck="false" required <%= username ? '' : 'autofocus' %>>
+                    </div>
+                </div>
+
+                <div class="login-field">
+                    <label for="id_password">Password</label>
+                    <div class="login-input">
+                        <svg class="login-input-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="10" width="16" height="11" rx="2.5"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/><circle cx="12" cy="15.5" r="1.2" fill="currentColor"/></svg>
+                        <input type="password" name="password" id="id_password" placeholder="Enter your password" autocomplete="current-password" required <%= username ? 'autofocus' : '' %>>
+                        <button type="button" class="login-eye" aria-controls="id_password" aria-label="Show password" aria-pressed="false">
+                            <svg class="eye-open" width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7S2 12 2 12Z"/><circle cx="12" cy="12" r="3"/></svg>
+                            <svg class="eye-closed" width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 3l18 18"/><path d="M10.6 5.1A10.8 10.8 0 0 1 12 5c6.4 0 10 7 10 7a17 17 0 0 1-3.2 4.1M6.6 6.6A17 17 0 0 0 2 12s3.6 7 10 7a10 10 0 0 0 5.4-1.6"/><path d="M9.9 9.9a3 3 0 0 0 4.2 4.2"/></svg>
+                        </button>
+                    </div>
+                    <div class="caps-hint" id="caps-hint" hidden>Caps Lock is on.</div>
+                </div>
+
+                <div class="login-row">
+                    <label class="login-check">
+                        <input type="checkbox" name="remember" value="1" <%= locals.remember ? 'checked' : '' %>>
+                        Remember me
+                    </label>
+                    <button type="button" class="login-link" aria-expanded="false" aria-controls="forgot-note">Forgot password?</button>
+                </div>
+                <p class="login-note" id="forgot-note" hidden>Ask your administrator to reset your password. They can do it from Administration › Users.</p>
+
+                <button type="submit" class="login-submit">
+                    Sign in
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+                </button>
+            </form>
+        </div>
+        <p class="login-copyright login-copyright-mobile">&copy; <%= new Date().getFullYear() %> Shaigan Pharmaceutical. All rights reserved.</p>
+    </section>
+</main>
+
+<script>
+    (function () {
+        var input = document.getElementById("id_password");
+        var eye = document.querySelector(".login-eye");
+        var hint = document.getElementById("caps-hint");
+        eye.addEventListener("click", function () {
+            var show = input.type === "password";
+            input.type = show ? "text" : "password";
+            eye.setAttribute("aria-pressed", String(show));
+            eye.setAttribute("aria-label", show ? "Hide password" : "Show password");
+            input.focus();
+        });
+        function caps(e) { if (e.getModifierState) hint.hidden = !e.getModifierState("CapsLock"); }
+        input.addEventListener("keyup", caps);
+        input.addEventListener("keydown", caps);
+
+        var forgot = document.querySelector(".login-link");
+        var note = document.getElementById("forgot-note");
+        forgot.addEventListener("click", function () {
+            note.hidden = !note.hidden;
+            forgot.setAttribute("aria-expanded", String(!note.hidden));
+        });
+    })();
+</script>
+</body>
+</html>

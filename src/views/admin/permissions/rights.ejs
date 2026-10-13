@@ -1,0 +1,120 @@
+<%- include('_tabs') %>
+
+<% if (!role) { %>
+    <div class="empty-state">There are no roles yet. <a href="/admin/groups/add/">Create the first role</a>.</div>
+<% } else { %>
+
+<div class="role-picker" role="tablist" aria-label="Roles">
+    <% roleList.forEach(function (g) { const n = userCounts.get(g.id) || 0; %>
+        <a href="/admin/permissions/?role=<%= g.id %>" class="role-chip <%= g.id === role.id ? 'active' : '' %>" role="tab" aria-selected="<%= g.id === role.id %>">
+            <span class="role-chip-name"><%= g.name %></span>
+            <span class="role-chip-count"><%= n %> <%= n === 1 ? 'user' : 'users' %></span>
+        </a>
+    <% }) %>
+    <a href="/admin/groups/add/" class="role-chip role-chip-add">+ New role</a>
+</div>
+
+<% function area(x, showScope) { %>
+    <tr>
+        <th scope="row">
+            <div class="rights-area"><%= x.label %></div>
+            <% if (showScope && x.own) { %><div class="muted-sm own-note" data-own-for="<%= x.key %>" <%= x.scope === 'own' ? '' : 'hidden' %>><%= x.own %></div><% } %>
+        </th>
+        <% BASIC.forEach(function (b) { %>
+            <td class="rights-check">
+                <label class="tick">
+                    <input type="checkbox" name="r__<%= x.key %>__<%= b[0] %>" value="1" <%= x.has(b[0]) ? 'checked' : '' %>>
+                    <span class="sr-only"><%= b[1] %> <%= x.label %></span>
+                </label>
+            </td>
+        <% }) %>
+        <td>
+            <% if (showScope) { %>
+                <select name="scope__<%= x.key %>" class="rights-scope" aria-label="Which <%= x.label.toLowerCase() %>">
+                    <option value="all" <%= x.scope === 'all' ? 'selected' : '' %>>All</option>
+                    <option value="own" <%= x.scope === 'own' ? 'selected' : '' %>>Only their own</option>
+                </select>
+            <% } %>
+        </td>
+    </tr>
+<% } %>
+
+<form method="post" action="/admin/permissions/" class="rights-form">
+    <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+    <input type="hidden" name="role_id" value="<%= role.id %>">
+
+    <section class="section">
+        <h2 class="section-title">What can <%= role.name %> do?</h2>
+        <div class="table-wrap">
+        <table class="rights-table">
+            <thead>
+                <tr>
+                    <th>Area</th>
+                    <% BASIC.forEach(function (b) { %><th class="rights-check"><%= b[1] %></th><% }) %>
+                    <th>Which records</th>
+                </tr>
+            </thead>
+            <tbody>
+                <% work.forEach(function (x) { area(x, true); }) %>
+            </tbody>
+        </table>
+        </div>
+    </section>
+
+    <section class="section">
+        <h2 class="section-title">Extra rights</h2>
+        <p class="muted-sm" style="margin-top: -6px;">These follow the "Which records" choice of their area above.</p>
+        <div class="extras">
+            <% work.filter(function (x) { return x.extras.length; }).forEach(function (x) { %>
+                <fieldset class="extras-group">
+                    <legend><%= x.label %></legend>
+                    <% x.extras.forEach(function (e) { %>
+                        <label class="check-item">
+                            <input type="checkbox" name="r__<%= x.key %>__<%= e[0] %>" value="1" <%= x.has(e[0]) ? 'checked' : '' %>>
+                            <%= e[1] %>
+                        </label>
+                    <% }) %>
+                </fieldset>
+            <% }) %>
+        </div>
+    </section>
+
+    <section class="section">
+        <h2 class="section-title">Administration</h2>
+        <label class="check-item" style="margin-bottom: 12px;">
+            <input type="checkbox" name="admin_access" value="1" <%= adminAccess ? 'checked' : '' %>>
+            Open the Administration area
+        </label>
+        <div class="table-wrap">
+        <table class="rights-table">
+            <thead>
+                <tr>
+                    <th>Area</th>
+                    <% BASIC.forEach(function (b) { %><th class="rights-check"><%= b[1] %></th><% }) %>
+                    <th></th>
+                </tr>
+            </thead>
+            <tbody>
+                <% admin.forEach(function (x) { area(x, false); }) %>
+            </tbody>
+        </table>
+        </div>
+    </section>
+
+    <div class="rights-save">
+        <button type="submit" class="btn btn-primary">Save rights for <%= role.name %></button>
+        <span class="muted-sm">Users with more than one role get everything their roles allow.</span>
+    </div>
+</form>
+<% } %>
+
+<script>
+    // Show what "Only their own" means when it's chosen
+    document.querySelectorAll(".rights-scope").forEach(function (sel) {
+        sel.addEventListener("change", function () {
+            var key = sel.name.replace("scope__", "");
+            var note = document.querySelector('[data-own-for="' + key + '"]');
+            if (note) note.hidden = sel.value !== "own";
+        });
+    });
+</script>

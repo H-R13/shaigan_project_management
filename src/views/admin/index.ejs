@@ -1,0 +1,28 @@
+<div class="page-header">
+    <div>
+        <h1 class="page-title">Administration</h1>
+        <div class="page-subtitle">Manage users, roles, projects, lists and tasks.</div>
+    </div>
+</div>
+
+<div class="admin-sections">
+<% if (canManagePermissions) { %>
+    <div class="section">
+        <h2 class="section-title">Access</h2>
+        <div class="admin-row"><span><a href="/admin/permissions/">Users &amp; access</a> <span class="muted">— who can see and do what</span></span></div>
+    </div>
+<% } %>
+<% sections.forEach(function (section) {
+     const keys = section.keys.filter(function (key) { return rperm[key].read; });
+     if (!keys.length) return; %>
+    <div class="section">
+        <h2 class="section-title"><%= section.title %></h2>
+        <% keys.forEach(function (key) { const r = resources[key]; %>
+            <div class="admin-row">
+                <span><a href="/admin/<%= key %>/"><%= r.plural %></a> <span class="muted">(<%= counts[key] %>)</span></span>
+                <% if (rperm[key].create) { %><a href="/admin/<%= key %>/add/" class="add">+ Add</a><% } %>
+            </div>
+        <% }) %>
+    </div>
+<% }) %>
+</div>

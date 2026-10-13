@@ -1,0 +1,4 @@
+<%# Assignee. If this user may change it, it's a picker that saves straight
+    away (app.js). Params: kind ("task" | "subtask"), record %>
+<% const _who = record.assigned_to || (people || []).find(function (p) { return p.id === record.assigned_to_id; }) || null; %>
+<% if (canSet(kind, 'assigned_to_id', record)) { %><select class="assign-picker <%= _who ? '' : 'is-empty' %>" data-url="/api/<%= kind %>/<%= record.id %>/assign" aria-label="Assignee of <%= record.title %>"><option value="">Unassigned</option><% (people || []).forEach(function (p) { %><option value="<%= p.id %>" <%= p.id === record.assigned_to_id ? 'selected' : '' %>><%= p.username %><%= p.id === user.id ? ' (you)' : '' %></option><% }) %></select><% } else if (_who) { %><span class="person"><span class="avatar avatar-sm"><%= _who.username[0].toUpperCase() %></span><%= _who.username %><%= _who.id === user.id ? ' (you)' : '' %></span><% } else { %><span class="muted-sm">Unassigned</span><% } %>

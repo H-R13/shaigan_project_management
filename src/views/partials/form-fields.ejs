@@ -1,0 +1,110 @@
+<%# Renders a list of field specs — the equivalent of {{ form.as_p }} %>
+<% if (errors.__all__) { %>
+    <div class="form-error"><%= errors.__all__ %></div>
+<% } %>
+
+<% fields.forEach(function (f) {
+     const id = 'id_' + f.name;
+     const val = values[f.name];
+     const err = errors[f.name]; %>
+<div class="form-row <%= err ? 'has-error' : '' %>">
+    <% if (f.readonly) { %>
+        <label for="<%= id %>"><%= f.label %></label>
+        <input type="text" id="<%= id %>"
+               value="<%= f.type === 'date' ? (val ? formatDate(val) : '-')
+                        : (f.type === 'select' || f.type === 'fk') ? ((f.choices || []).find(function (c) { return String(c[0]) === String(val); }) || [null, val || '-'])[1]
+                        : val %>"
+               readonly class="readonly" aria-readonly="true">
+        <% if (f.name === 'status' && val === 'completed') { %>
+            <div class="help">Completed. Only an administrator can change the status now.</div>
+        <% } %>
+    <% } else if (f.type === 'checkbox') { %>
+        <label class="checkbox" for="<%= id %>">
+            <input type="checkbox" id="<%= id %>" name="<%= f.name %>" <%= val ? 'checked' : '' %>>
+            <%= f.label %>
+        </label>
+    <% } else { %>
+        <label for="<%= id %>"><%= f.label %></label>
+
+        <% if (f.type === 'textarea') { %>
+            <textarea id="<%= id %>" name="<%= f.name %>" rows="<%= f.rows || 5 %>"
+                      placeholder="<%= f.placeholder || '' %>"
+                      <%= f.required ? 'required' : '' %>><%= val %></textarea>
+
+        <% } else if (f.type === 'select' || f.type === 'fk') { %>
+            <select id="<%= id %>" name="<%= f.name %>" <%= f.required ? 'required' : '' %>>
+                <% if (f.type === 'fk' || !f.required) { %>
+                    <option value="">---------</option>
+                <% } %>
+                <% f.choices.forEach(function (c) { %>
+                    <option value="<%= c[0] %>" <%= String(c[0]) === String(val) ? 'selected' : '' %>><%= c[1] %></option>
+                <% }) %>
+            </select>
+
+        <% } else if (f.type === 'multiselect') {
+             // Checkboxes instead of a Ctrl-click list: each click changes only that one item.
+             // Permission codes like "add_task" are grouped by what they apply to.
+             const GROUP_NAMES = { project: 'Projects', projectlist: 'Project lists', task: 'Tasks',
+                                   subtask: 'Subtasks', comment: 'Comments', activitylog: 'Activity log',
+                                   special: 'Special permissions' };
+             const groups = [];
+             f.choices.forEach(function (c) {
+                 const m = /^(add|change|delete|view)_([a-z]+)$/.exec(String(c[0]));
+                 const key = f.name === 'permissions' ? (m ? m[2] : 'special') : '';
+                 let g = groups.find(function (x) { return x.key === key; });
+                 if (!g) { g = { key: key, title: GROUP_NAMES[key] || '', items: [] }; groups.push(g); }
+                 g.items.push(c);
+             });
+             const selected = (val || []).map(String); %>
+            <div class="check-list" id="<%= id %>" data-check-list>
+                <div class="check-list-tools">
+                    <button type="button" class="link-btn" data-check-all>Select all</button>
+                    <button type="button" class="link-btn" data-check-none>Clear all</button>
+                    <span class="check-count" data-check-count></span>
+                </div>
+                <div class="check-groups">
+                <% groups.forEach(function (g) { %>
+                    <fieldset class="check-group">
+                        <% if (g.title) { %><legend><%= g.title %></legend><% } %>
+                        <% g.items.forEach(function (c) { %>
+                            <label class="check-item">
+                                <input type="checkbox" name="<%= f.name %>" value="<%= c[0] %>"
+                                       <%= selected.includes(String(c[0])) ? 'checked' : '' %>>
+                                <span><%= c[1] %></span>
+                            </label>
+                        <% }) %>
+                    </fieldset>
+                <% }) %>
+                </div>
+            </div>
+            <script>
+                (function () {
+                    var box = document.getElementById(<%- JSON.stringify(id) %>);
+                    var boxes = box.querySelectorAll('input[type=checkbox]');
+                    var count = box.querySelector('[data-check-count]');
+                    function update() {
+                        var n = 0; boxes.forEach(function (b) { if (b.checked) n++; });
+                        count.textContent = n + ' of ' + boxes.length + ' selected';
+                    }
+                    box.querySelector('[data-check-all]').addEventListener('click', function () { boxes.forEach(function (b) { b.checked = true; }); update(); });
+                    box.querySelector('[data-check-none]').addEventListener('click', function () { boxes.forEach(function (b) { b.checked = false; }); update(); });
+                    boxes.forEach(function (b) { b.addEventListener('change', update); });
+                    update();
+                })();
+            </script>
+
+        <% } else { %>
+            <input id="<%= id %>" name="<%= f.name %>"
+                   type="<%= f.type === 'date' ? 'date' : f.type === 'number' ? 'number' : f.type === 'password' ? 'password' : 'text' %>"
+                   value="<%= f.type === 'password' ? '' : val %>"
+                   <%= f.maxLength ? 'maxlength=' + f.maxLength : '' %>
+                   <%= f.min !== undefined ? 'min=' + f.min : '' %>
+                   <%= f.type === 'password' ? 'autocomplete=new-password' : '' %>
+                   <%= f.required ? 'required' : '' %>>
+        <% } %>
+    <% } %>
+
+    <% if (f.help) { %><div class="help"><%= f.help %></div><% } %>
+    <% if (err) { %><div class="field-error"><%= err %></div><% } %>
+</div>
+<% }) %>

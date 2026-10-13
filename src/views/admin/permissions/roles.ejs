@@ -1,0 +1,98 @@
+<%- include('_tabs') %>
+
+<div class="section">
+    <form method="get" action="/admin/permissions/grid/" class="toolbar">
+        <label for="role-pick" class="muted">Role</label>
+        <select id="role-pick" name="role" onchange="this.form.submit()">
+            <% roleList.forEach(function (g) { %>
+                <option value="<%= g.id %>" <%= role && g.id === role.id ? 'selected' : '' %>><%= g.name %> (<%= counts.get(g.id) || 0 %> rules)</option>
+            <% }) %>
+        </select>
+        <noscript><button type="submit" class="btn btn-secondary btn-small">Show</button></noscript>
+        <a href="/admin/groups/add/" class="muted">+ New role</a>
+    </form>
+
+    <% if (!role) { %>
+        <p class="muted">No roles yet. <a href="/admin/groups/add/">Create a role</a> first.</p>
+    <% } else { %>
+    <p class="muted-sm perm-help">
+        For each module choose what <strong><%= role.name %></strong> may do:
+        <strong>All</strong> = on every record, <strong>Own</strong> = only on the user's own records
+        (what "own" means is set per module under <a href="/admin/permissions/modules/">Modules &amp; actions</a>),
+        <strong>—</strong> = not allowed. Users with several roles get the combined access.
+    </p>
+
+    <form method="post" action="/admin/permissions/grid/" id="perm-grid-form">
+        <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+        <input type="hidden" name="role_id" value="<%= role.id %>">
+        <div class="table-wrap perm-grid-wrap">
+        <table class="data-table perm-grid">
+            <thead>
+                <tr>
+                    <th class="perm-module-col">Module</th>
+                    <% actionList.forEach(function (a) { %>
+                        <th title="<%= a.description %>"><%= a.label %></th>
+                    <% }) %>
+                    <th class="perm-quick-col">Quick set</th>
+                </tr>
+            </thead>
+            <tbody>
+            <% moduleList.forEach(function (m) { %>
+                <tr>
+                    <th scope="row" class="perm-module-col"><%= m.label %><div class="muted-sm"><%= m.key %></div></th>
+                    <% actionList.forEach(function (a) { const v = current.get(m.key + ':' + a.key) || ''; %>
+                        <td>
+                            <select name="p__<%= m.key %>__<%= a.key %>" class="perm-select perm-<%= v || 'none' %>" aria-label="<%= m.label %>: <%= a.label %>">
+                                <option value="">—</option>
+                                <% PERM_SCOPES.forEach(function (c) { %>
+                                    <option value="<%= c[0] %>" <%= v === c[0] ? 'selected' : '' %>><%= c[1] %></option>
+                                <% }) %>
+                            </select>
+                        </td>
+                    <% }) %>
+                    <td class="perm-quick-col">
+                        <button type="button" class="link-btn" data-row-set="all">All</button>
+                        <button type="button" class="link-btn" data-row-set="">None</button>
+                    </td>
+                </tr>
+            <% }) %>
+            </tbody>
+        </table>
+        </div>
+        <div class="btn-row" style="margin-top: 16px;">
+            <button type="submit" class="btn btn-primary">Save permissions for <%= role.name %></button>
+        </div>
+    </form>
+    <% } %>
+</div>
+
+<% if (role && roleList.length > 1) { %>
+<div class="section">
+    <h2 class="section-title">Copy from another role</h2>
+    <form method="post" action="/admin/permissions/copy/" class="toolbar" onsubmit="return confirm('Replace all permissions and field rules of <%= role.name %>?');">
+        <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+        <input type="hidden" name="to_id" value="<%= role.id %>">
+        <span class="muted">Replace <strong><%= role.name %></strong>'s rules with those of</span>
+        <select name="from_id" aria-label="Copy from role">
+            <% roleList.forEach(function (g) { if (g.id === role.id) return; %>
+                <option value="<%= g.id %>"><%= g.name %></option>
+            <% }) %>
+        </select>
+        <button type="submit" class="btn btn-secondary btn-small">Copy</button>
+    </form>
+</div>
+<% } %>
+
+<script>
+(function () {
+    var form = document.getElementById('perm-grid-form');
+    if (!form) return;
+    function paint(sel) { sel.className = 'perm-select perm-' + (sel.value || 'none'); }
+    form.addEventListener('change', function (e) { if (e.target.classList.contains('perm-select')) paint(e.target); });
+    form.addEventListener('click', function (e) {
+        var btn = e.target.closest('[data-row-set]');
+        if (!btn) return;
+        btn.closest('tr').querySelectorAll('select.perm-select').forEach(function (s) { s.value = btn.getAttribute('data-row-set'); paint(s); });
+    });
+})();
+</script>

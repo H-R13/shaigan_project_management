@@ -1,0 +1,71 @@
+<div class="breadcrumbs"><a href="/admin/">Administration</a> / <%= r.plural %></div>
+
+<div class="page-header">
+    <div>
+        <h1 class="page-title"><%= r.plural %></h1>
+        <div class="page-subtitle"><%= count %> total</div>
+    </div>
+    <% if (rperm[key].create) { %><a href="/admin/<%= key %>/add/" class="btn btn-primary">Add <%= r.label.toLowerCase() %></a><% } %>
+</div>
+
+<div class="section">
+    <form method="get" class="toolbar">
+        <% if (r.search.length) { %>
+            <input type="search" name="q" value="<%= q %>" placeholder="Search" aria-label="Search">
+        <% } %>
+        <% filters.forEach(function (f) { %>
+            <select name="<%= f.field %>" aria-label="<%= f.label %>">
+                <option value="">All <%= f.label.toLowerCase() %></option>
+                <% f.choices.forEach(function (c) { %>
+                    <option value="<%= c[0] %>" <%= String(activeFilters[f.field]) === String(c[0]) ? 'selected' : '' %>><%= c[1] %></option>
+                <% }) %>
+            </select>
+        <% }) %>
+        <% if (r.search.length || filters.length) { %>
+            <button type="submit" class="btn btn-secondary">Apply</button>
+            <% if (q || Object.keys(activeFilters).length) { %><a href="/admin/<%= key %>/" class="muted">Clear</a><% } %>
+        <% } %>
+    </form>
+
+    <% if (rows.length) { %>
+    <div class="table-wrap">
+    <table>
+        <thead>
+            <tr>
+                <% r.columns.forEach(function (c) { %><th><%= c[0] %></th><% }) %>
+                <th></th>
+            </tr>
+        </thead>
+        <tbody>
+            <% rows.forEach(function (o) { %>
+            <tr>
+                <% r.columns.forEach(function (c, i) { %>
+                    <td>
+                        <% if (i === 0 && rperm[key].edit) { %>
+                            <a href="/admin/<%= key %>/<%= o.id %>/" class="task-link"><%= c[1](o) %></a>
+                        <% } else { %>
+                            <%= c[1](o) %>
+                        <% } %>
+                    </td>
+                <% }) %>
+                <td style="text-align: right;">
+                    <% if (rperm[key].delete) { %><a href="/admin/<%= key %>/<%= o.id %>/delete/" class="muted">Delete</a><% } %>
+                </td>
+            </tr>
+            <% }) %>
+        </tbody>
+    </table>
+    </div>
+
+    <% if (pages > 1) {
+         const qs = (p) => { const u = new URLSearchParams(Object.assign({}, activeFilters, q ? { q } : {}, { page: p })); return '?' + u.toString(); }; %>
+    <div class="pagination">
+        <% if (page > 1) { %><a href="<%= qs(page - 1) %>">Previous</a><% } %>
+        <span>Page <%= page %> of <%= pages %></span>
+        <% if (page < pages) { %><a href="<%= qs(page + 1) %>">Next</a><% } %>
+    </div>
+    <% } %>
+    <% } else { %>
+        <p class="muted">No <%= r.plural.toLowerCase() %> found. <a href="/admin/<%= key %>/add/">Add one</a>.</p>
+    <% } %>
+</div>

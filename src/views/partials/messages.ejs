@@ -1,0 +1,6 @@
+<%# Flash messages show as toasts (bottom right); app.js fades them out %>
+<div class="toasts" id="toasts" role="status" aria-live="polite">
+    <% (messages || []).forEach(function (m) { %>
+        <div class="toast <%= m.type === 'error' ? 'error' : '' %>"><%= m.text %></div>
+    <% }) %>
+</div>

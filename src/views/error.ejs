@@ -1,0 +1,12 @@
+<div class="section">
+    <p class="error-code"><%= status %></p>
+    <h1 class="page-title" style="margin-top: 6px;"><%= title %></h1>
+    <p class="muted"><%= message %></p>
+    <div class="btn-row" style="margin-top: 18px;">
+        <% if (locals.user) { %>
+            <a href="/" class="btn btn-primary">Go to dashboard</a>
+        <% } else { %>
+            <a href="/login/" class="btn btn-primary">Log in</a>
+        <% } %>
+    </div>
+</div>

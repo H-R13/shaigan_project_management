@@ -1,0 +1,15 @@
+<div class="breadcrumbs"><a href="/task/<%= subtask.task_id %>/">Back to task</a></div>
+<div class="page-header">
+    <h1 class="page-title" data-popup-title>Delete this subtask?</h1>
+</div>
+
+<div class="section" data-popup-body>
+    <p><strong><%= subtask.title %></strong> and its comments will be deleted. This can't be undone.</p>
+    <form method="post" action="/subtask/<%= subtask.id %>/delete/">
+        <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+        <div class="btn-row">
+            <button type="submit" class="btn btn-danger">Delete subtask</button>
+            <a href="/task/<%= subtask.task_id %>/" class="btn btn-secondary" data-popup-close>Keep it</a>
+        </div>
+    </form>
+</div>

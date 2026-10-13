@@ -1,0 +1,167 @@
+<div class="breadcrumbs"><a href="/admin/">Administration</a> / Users &amp; access</div>
+
+<div class="page-header">
+    <div>
+        <h1 class="page-title">Users &amp; access</h1>
+        <div class="page-subtitle">A person's role decides what they can see. Their ticks decide what they can do.</div>
+    </div>
+    <a href="/admin/users/add/" class="btn btn-secondary">Add a person</a>
+</div>
+
+<section class="section">
+    <h2 class="section-title">Roles: what can they see?</h2>
+    <form method="post" action="/admin/permissions/roles/">
+        <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+        <div class="table-wrap">
+        <table class="access-table see-grid">
+            <thead>
+                <tr class="access-groups">
+                    <th rowspan="2">Role</th>
+                    <th rowspan="2">People</th>
+                    <th colspan="<%= ACCESS_DOCS.length %>" class="access-group">Can see</th>
+                </tr>
+                <tr>
+                    <% ACCESS_DOCS.forEach(function (d, i) { %>
+                        <th class="access-see <%= i === 0 ? 'access-first' : '' %>"><%= d.label %></th>
+                    <% }) %>
+                </tr>
+            </thead>
+            <tbody>
+            <% roleList.forEach(function (g) { const seen = sees.get(g.id) || new Map(); %>
+                <tr>
+                    <td class="cell-title"><%= g.name %></td>
+                    <td class="muted-sm"><%= counts.get(g.id) || 0 %></td>
+                    <% ACCESS_DOCS.forEach(function (d, i) { const v = seen.get(d.key) || 'none'; %>
+                        <td class="access-see <%= i === 0 ? 'access-first' : '' %>">
+                            <select name="see_<%= g.id %>__<%= d.key %>" class="see-select see-<%= v %>" aria-label="<%= g.name %> can see <%= d.label %>">
+                                <% SEE_CHOICES.forEach(function (c) { %>
+                                    <option value="<%= c[0] %>" <%= v === c[0] ? 'selected' : '' %>><%= c[1] %></option>
+                                <% }) %>
+                            </select>
+                        </td>
+                    <% }) %>
+                </tr>
+            <% }) %>
+            </tbody>
+        </table>
+        </div>
+        <div class="btn-row access-save">
+            <button type="submit" class="btn btn-primary">Save roles</button>
+            <a href="/admin/groups/add/" class="muted-sm">+ Add a role</a>
+        </div>
+        <p class="muted-sm" style="margin: 10px 0 0;"><strong>View All</strong> = every record of that type, whoever it belongs to. <strong>View Assigned</strong> = only tasks and subtasks assigned to them, and the lists and projects those are in (plus projects they created). <strong>View None</strong> = hidden. Subtasks of a task they can see always show on that task's page.</p>
+    </form>
+</section>
+
+<section class="section" id="person">
+    <h2 class="section-title">People: what can they do?</h2>
+    <div class="people-layout">
+        <nav class="people-list" aria-label="People">
+            <% users.forEach(function (u) {
+                 const rid = roleOf.get(u.id);
+                 const r = roleList.find(function (g) { return g.id === rid; }); %>
+                <a href="/admin/permissions/?person=<%= u.id %>#person" class="people-item <%= person && u.id === person.id ? 'active' : '' %> <%= u.is_active ? '' : 'is-inactive' %>" <%= person && u.id === person.id ? 'aria-current="true"' : '' %>>
+                    <span class="avatar avatar-sm"><%= u.username[0].toUpperCase() %></span>
+                    <span class="people-item-text">
+                        <span class="people-item-name"><%= u.username %><%= u.id === user.id ? ' (you)' : '' %></span>
+                        <span class="people-item-role"><%= u.is_superuser ? 'Superuser' : (r ? r.name : 'No role') %><%= u.can_manage && !u.is_superuser ? ' · Admin' : '' %><%= u.is_active ? '' : ' · inactive' %></span>
+                    </span>
+                </a>
+            <% }) %>
+            <a href="/admin/users/add/" class="roles-add">+ Add a person</a>
+        </nav>
+
+        <% if (!person) { %>
+            <div class="empty-state">No people yet.</div>
+        <% } else if (person.is_superuser) { %>
+            <div class="person-panel">
+                <h3 class="person-name"><%= person.username %></h3>
+                <p class="muted">Superuser: can see and do everything. Nothing to set here.</p>
+            </div>
+        <% } else { const rid = roleOf.get(person.id); %>
+        <form method="post" action="/admin/permissions/person/<%= person.id %>/" class="person-panel">
+            <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+            <input type="hidden" name="orig_role" value="<%= rid || '' %>">
+
+            <div class="person-head">
+                <div>
+                    <h3 class="person-name"><%= person.username %></h3>
+                    <% const full = [person.first_name, person.last_name].filter(Boolean).join(' '); if (full) { %><div class="muted-sm"><%= full %></div><% } %>
+                </div>
+                <label class="person-field">
+                    <span>Role (what they see)</span>
+                    <select name="role" class="access-select">
+                        <option value="">No role</option>
+                        <% roleList.forEach(function (g) { %>
+                            <option value="<%= g.id %>" <%= g.id === rid ? 'selected' : '' %>><%= g.name %></option>
+                        <% }) %>
+                    </select>
+                    <% if (multi.has(person.id)) { %><small class="muted-sm">Has more than one role; choosing one replaces them.</small><% } %>
+                </label>
+            </div>
+
+            <div class="table-wrap">
+            <table class="rights-grid">
+                <thead>
+                    <tr>
+                        <th>Document</th>
+                        <th class="see-col" title="What this person can see. &quot;As role&quot; follows the Roles grid above.">See</th>
+                        <% ACCESS_ACTIONS.forEach(function (a) { %><th class="access-tick" title="<%= HELP[a[0]] %>"><%= a[1] %></th><% }) %>
+                    </tr>
+                </thead>
+                <tbody>
+                <% ACCESS_DOCS.forEach(function (d) { %>
+                    <tr>
+                        <th scope="row"><%= d.label %></th>
+                        <% const roleSee = ((sees.get(roleOf.get(person.id)) || new Map()).get(d.key)) || 'none';
+                           const mine = ['all', 'own', 'none'].find(function (v) { return rights.has(d.key + ':see_' + v); }) || '';
+                           const shown = mine || roleSee; %>
+                        <td class="see-col">
+                            <select name="see__<%= d.key %>" data-role-see="<%= roleSee %>" class="see-select see-<%= shown %><%= mine ? '' : ' see-inherit' %>" aria-label="<%= person.username %> can see <%= d.label %>">
+                                <option value="">As role: <%= SEE_CHOICES.find(function (c) { return c[0] === roleSee; })[1] %></option>
+                                <% SEE_CHOICES.forEach(function (c) { %>
+                                    <option value="<%= c[0] %>" <%= mine === c[0] ? 'selected' : '' %>><%= c[1] %></option>
+                                <% }) %>
+                            </select>
+                        </td>
+                        <% ACCESS_ACTIONS.forEach(function (a) { %>
+                            <td class="access-tick">
+                                <% if (d.actions.indexOf(a[0]) >= 0) { %>
+                                    <input type="checkbox" class="tick-box" name="r__<%= d.key %>__<%= a[0] %>" value="1" <%= rights.has(d.key + ':' + a[0]) ? 'checked' : '' %> aria-label="<%= a[1] %> <%= d.label.toLowerCase() %>">
+                                <% } else { %>
+                                    <span class="na" aria-hidden="true">—</span>
+                                <% } %>
+                            </td>
+                        <% }) %>
+                    </tr>
+                <% }) %>
+                </tbody>
+            </table>
+            </div>
+
+            <label class="switch-row switch-row-strong">
+                <span class="switch-text"><strong>Admin</strong><small>Full control of everything, including Administration and this page.</small></span>
+                <input type="checkbox" class="switch" name="can_manage" value="1" <%= person.can_manage ? 'checked' : '' %>>
+            </label>
+
+            <div class="person-actions">
+                <button type="submit" class="btn btn-primary">Save <%= person.username %></button>
+                <% if (others.length) { %>
+                <span class="person-copy">
+                    <span class="muted-sm">or give the same rights as</span>
+                    <select name="copy_from" class="access-select" aria-label="Copy rights from">
+                        <option value="">choose a person…</option>
+                        <% others.forEach(function (o) { %><option value="<%= o.id %>"><%= o.username %></option><% }) %>
+                    </select>
+                </span>
+                <% } %>
+            </div>
+            <p class="muted-sm" style="margin: 12px 0 0;">
+                <strong>Add</strong> = create (and assign). <strong>Edit</strong> = change title, dates and details.
+                <strong>Status</strong> = update the status. <strong>Comment</strong> = write comments. <strong>Delete</strong> = delete.
+                See = what they can see ("As role" follows the Roles grid). The ticks only work on what they can see.
+            </p>
+        </form>
+        <% } %>
+    </div>
+</section>

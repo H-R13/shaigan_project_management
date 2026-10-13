@@ -1,0 +1,47 @@
+<% const backId = subtask ? subtask.task_id : task.id; %>
+<div class="breadcrumbs"><a href="/task/<%= backId %>/">Back to task</a></div>
+
+<div class="page-header">
+    <h1 class="page-title" data-popup-title><%= subtask ? 'Edit subtask' : 'New subtask' %></h1>
+</div>
+
+<div class="section" data-popup-body>
+    <form method="post" action="<%= subtask ? '/subtask/' + subtask.id + '/edit/' : '/task/' + task.id + '/subtask/create/' %>">
+        <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+        <%- include('../partials/form-fields', { fields, values, errors }) %>
+
+        <% if (typeof memberRows !== 'undefined' && memberRows) { %>
+        <fieldset class="member-access">
+            <legend>Who can access this subtask</legend>
+            <p class="muted-sm">
+                <strong>Can edit</strong>: can update the subtask. <strong>Read only</strong>: can open it and comment, but not change it.
+                The "Assigned to" user can always edit. Administrators and Project Managers always have full access.
+            </p>
+            <div class="table-wrap">
+            <table class="data-table member-table">
+                <thead><tr><th>User</th><th>Access</th></tr></thead>
+                <tbody>
+                <% memberRows.forEach(function (r) { %>
+                    <tr>
+                        <td><span class="person"><span class="avatar avatar-sm"><%= r.user.username[0].toUpperCase() %></span><%= r.user.username %></span></td>
+                        <td>
+                            <select name="member_<%= r.user.id %>" aria-label="Access for <%= r.user.username %>">
+                                <option value="">No access</option>
+                                <% SUBTASK_ACCESS.forEach(function (c) { %>
+                                    <option value="<%= c[0] %>" <%= r.access === c[0] ? 'selected' : '' %>><%= c[1] %></option>
+                                <% }) %>
+                            </select>
+                        </td>
+                    </tr>
+                <% }) %>
+                </tbody>
+            </table>
+            </div>
+        </fieldset>
+        <% } %>
+        <div class="btn-row">
+            <button type="submit" class="btn btn-primary"><%= subtask ? 'Save changes' : 'Create subtask' %></button>
+            <a href="/task/<%= backId %>/" class="btn btn-secondary" data-popup-close>Cancel</a>
+        </div>
+    </form>
+</div>

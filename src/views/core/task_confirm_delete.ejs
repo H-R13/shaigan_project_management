@@ -1,0 +1,15 @@
+<div class="breadcrumbs"><a href="/task/<%= task.id %>/"><%= task.title %></a> / Delete</div>
+<div class="page-header">
+    <h1 class="page-title" data-popup-title>Delete this task?</h1>
+</div>
+
+<div class="section" data-popup-body>
+    <p><strong><%= task.title %></strong> will be deleted, together with its subtasks, comments and activity history. This can't be undone.</p>
+    <form method="post" action="/task/<%= task.id %>/delete/">
+        <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+        <div class="btn-row">
+            <button type="submit" class="btn btn-danger">Delete task</button>
+            <a href="/task/<%= task.id %>/" class="btn btn-secondary" data-popup-close>Keep it</a>
+        </div>
+    </form>
+</div>

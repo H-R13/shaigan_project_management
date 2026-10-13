@@ -1,0 +1,103 @@
+<div class="page-header">
+    <div>
+        <h1 class="page-title">Tasks</h1>
+        <div class="page-subtitle"><%= tasks.length %> <%= tasks.length === 1 ? 'task' : 'tasks' %><%= filtered ? ' match your filters' : ' you can access' %></div>
+    </div>
+</div>
+
+<!-- FILTERS -->
+<section class="panel filters-panel">
+    <form method="get" class="filters" role="search">
+        <label class="search-box">
+            <%- icon('search', 16) %>
+            <input type="search" name="q" value="<%= q %>" placeholder="Search tasks..." aria-label="Search tasks">
+        </label>
+        <select name="project" aria-label="Project">
+            <option value="">All projects</option>
+            <% projects.forEach(function (p) { %>
+                <option value="<%= p.id %>" <%= String(p.id) === f.project ? 'selected' : '' %>><%= p.name %></option>
+            <% }) %>
+        </select>
+        <select name="status" aria-label="Status">
+            <option value="">All statuses</option>
+            <% TASK_STATUS.forEach(function (c) { %>
+                <option value="<%= c[0] %>" <%= c[0] === f.status ? 'selected' : '' %>><%= c[1] %></option>
+            <% }) %>
+        </select>
+        <select name="priority" aria-label="Priority">
+            <option value="">All priorities</option>
+            <% TASK_PRIORITY.forEach(function (c) { %>
+                <option value="<%= c[0] %>" <%= c[0] === f.priority ? 'selected' : '' %>><%= c[1] %></option>
+            <% }) %>
+        </select>
+        <label class="check">
+            <input type="checkbox" name="mine" value="1" <%= f.mine ? 'checked' : '' %>> Assigned to me
+        </label>
+        <button type="submit" class="btn btn-primary btn-small">Apply</button>
+        <% if (filtered) { %><a href="/tasks/" class="clear-link">Clear</a><% } %>
+    </form>
+</section>
+
+<!-- TASK CARDS -->
+<% if (tasks.length) { %>
+<div class="task-board">
+    <% tasks.forEach(function (t) {
+         const subs = t.subtaskList || [];
+         const pct = t.subtaskTotal ? Math.round(t.subtaskDone / t.subtaskTotal * 100) : 0;
+         // Everyone working on the task: assignee + subtask assignees
+         const people = [];
+         if (t.assigned_to) people.push(t.assigned_to);
+         subs.forEach(function (x) {
+             if (x.assigned_to && !people.some(function (p) { return p.id === x.assigned_to.id; })) people.push(x.assigned_to);
+         });
+         const names = people.map(function (p) { return p.username; }).join(', '); %>
+    <article class="item-card board-card <%= t.isOverdue ? 'is-overdue' : '' %> <%= t.status === 'completed' ? 'is-done' : '' %>" style="--project: <%= projectColor(t.project_list.project.id) %>">
+        <div class="item-card-top">
+            <%- include('../../partials/status_picker', { kind: 'task', record: t }) %>
+            <span class="<%= priorityClass(t.priority) %>"><%= t.getPriorityDisplay() %></span>
+        </div>
+
+        <h3 class="item-card-title"><a href="/task/<%= t.id %>/" class="card-link"><%= t.title %></a></h3>
+        <div class="item-card-sub"><span class="project-dot" style="background: <%= projectColor(t.project_list.project.id) %>; margin: 0;"></span><%= t.project_list.project.name %> › <%= t.project_list.name %></div>
+
+        <% if (t.subtaskTotal) { %>
+        <div class="item-card-progress">
+            <div class="progress-row" style="margin: 0;">
+                <span class="progress progress-sm" role="progressbar" aria-label="Subtasks completed"
+                      aria-valuenow="<%= pct %>" aria-valuemin="0" aria-valuemax="100" style="margin: 0;">
+                    <span class="progress-bar" style="width: <%= pct %>%"></span>
+                </span>
+                <span class="progress-label"><%= t.subtaskDone %>/<%= t.subtaskTotal %></span>
+            </div>
+            <span class="muted-sm">subtasks completed</span>
+        </div>
+        <% } else { %>
+        <% } %>
+
+        <% if (t.due_date || t.follow_up_date) { %>
+        <dl class="item-card-dates">
+            <% if (t.due_date) { %><div><dt>Due</dt><dd><%= formatDate(t.due_date) %><% if (t.isOverdue) { %> <span class="overdue">Overdue</span><% } %></dd></div><% } %>
+            <% if (t.follow_up_date) { %><div><dt>Follow-up</dt><dd><%- include('../../partials/followup', { date: t.follow_up_date, status: t.status }) %></dd></div><% } %>
+        </dl>
+        <% } %>
+
+        <div class="item-card-foot">
+            <%- include('../../partials/assign_picker', { kind: 'task', record: t }) %>
+            <% if (people.length > 1 || (people.length === 1 && people[0].id !== t.assigned_to_id)) { %>
+                <span class="team" title="Working on it: <%= names %>" aria-label="Working on it: <%= names %>">
+                    <% people.slice(0, 4).forEach(function (p) { %>
+                        <span class="avatar avatar-sm team-avatar"><%= p.username[0].toUpperCase() %></span>
+                    <% }) %>
+                    <% if (people.length > 4) { %><span class="avatar avatar-sm team-avatar team-more">+<%= people.length - 4 %></span><% } %>
+                </span>
+            <% } %>
+        </div>
+    </article>
+    <% }) %>
+</div>
+
+<% } else { %>
+    <div class="empty-state">
+        <%= filtered ? 'No tasks match your filters.' : 'No tasks available to you yet.' %>
+    </div>
+<% } %>

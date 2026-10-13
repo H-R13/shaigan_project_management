@@ -1,0 +1,318 @@
+<!-- HEADER -->
+<div class="dash-header">
+    <div>
+        <div class="dash-date"><%= todayLabel %></div>
+        <h1 class="page-title"><%= greeting %>, <%= user.first_name || user.username %></h1>
+        <div class="page-subtitle"><%= stats.myOpenSubtasks ? 'You have ' + stats.myOpenSubtasks + ' open ' + (stats.myOpenSubtasks === 1 ? 'subtask' : 'subtasks') + '.' : 'Here is where your projects stand today.' %></div>
+    </div>
+    <div class="btn-row">
+        <a href="/tasks/" class="btn btn-secondary">All tasks</a>
+    </div>
+</div>
+
+<!-- KPI CARDS -->
+<div class="kpis">
+    <a href="/projects/" class="kpi kpi-blue">
+        <span class="kpi-icon"><%- icon('projects', 20) %></span>
+        <span class="kpi-body">
+            <span class="kpi-label">Active projects</span>
+            <span class="kpi-value"><%= stats.activeProjects %></span>
+            <span class="kpi-note">of <%= stats.totalProjects %> total</span>
+        </span>
+    </a>
+    <a href="/tasks/" class="kpi kpi-indigo">
+        <span class="kpi-icon"><%- icon('tasks', 20) %></span>
+        <span class="kpi-body">
+            <span class="kpi-label">Open tasks</span>
+            <span class="kpi-value"><%= stats.openTasks %></span>
+            <span class="kpi-note">of <%= stats.totalTasks %> total</span>
+        </span>
+    </a>
+    <a href="/tasks/?status=completed" class="kpi kpi-green">
+        <span class="kpi-icon"><%- icon('check', 20) %></span>
+        <span class="kpi-body">
+            <span class="kpi-label">Completed</span>
+            <span class="kpi-value"><%= stats.completedTasks %></span>
+            <span class="progress progress-sm" role="progressbar" aria-label="Completion rate"
+                  aria-valuenow="<%= stats.completionRate %>" aria-valuemin="0" aria-valuemax="100">
+                <span class="progress-bar" style="width: <%= stats.completionRate %>%"></span>
+            </span>
+            <span class="kpi-note"><%= stats.completionRate %>% completion rate</span>
+        </span>
+    </a>
+    <a href="/tasks/" class="kpi <%= stats.overdueTasks ? 'kpi-red' : 'kpi-grey' %>">
+        <span class="kpi-icon"><%- icon('alert', 20) %></span>
+        <span class="kpi-body">
+            <span class="kpi-label">Overdue</span>
+            <span class="kpi-value"><%= stats.overdueTasks %></span>
+            <span class="kpi-note"><%= stats.overdueTasks ? 'Need attention' : 'All on schedule' %></span>
+        </span>
+    </a>
+</div>
+
+<div class="dash-grid">
+    <!-- LEFT COLUMN -->
+    <div class="dash-main">
+
+        <!-- My Subtasks + Recent Tasks side by side -->
+        <div class="dash-pair <%= mySubtasks.length ? '' : 'dash-pair-single' %>">
+        <% if (mySubtasks.length) { %>
+        <section class="panel">
+            <div class="panel-head">
+                <h2 class="panel-title"><%- icon('subtasks') %> My subtasks</h2>
+                <span class="panel-meta"><%= stats.myOpenSubtasks %> open</span>
+                <a href="/subtasks/?mine=1" class="panel-link">View all</a>
+            </div>
+
+            <div class="card-grid">
+            <% mySubtasks.slice(0, 6).forEach(function (s) {
+                 const done = s.status === 'completed';
+                 const overdue = s.due_date && s.due_date < today && !done; %>
+                <article class="item-card <%= done ? 'is-done' : '' %> <%= overdue ? 'is-overdue' : '' %>" style="--project: <%= projectColor(s.task.project_list.project.id) %>">
+                    <div class="item-card-top">
+                        <%- include('../partials/status_picker', { kind: 'subtask', record: s }) %>
+                        <% if (overdue) { %><span class="overdue">Overdue</span><% } %>
+                    </div>
+                    <h3 class="item-card-title"><a href="/subtask/<%= s.id %>/"><%= s.title %></a></h3>
+                    <div class="item-card-sub">
+                        <a href="/task/<%= s.task.id %>/"><%= s.task.title %></a> in <%= s.task.project_list.project.name %>
+                    </div>
+                    <% if (s.due_date || s.follow_up_date) { %>
+                    <dl class="item-card-dates">
+                        <% if (s.due_date) { %><div><dt>Due</dt><dd><%= formatDate(s.due_date) %></dd></div><% } %>
+                        <% if (s.follow_up_date) { %><div><dt>Follow-up</dt><dd><%- include('../partials/followup', { date: s.follow_up_date, status: s.status }) %></dd></div><% } %>
+                    </dl>
+                    <% } %>
+
+                </article>
+            <% }) %>
+            </div>
+        </section>
+        <% } %>
+
+        <section class="panel">
+            <div class="panel-head">
+                <h2 class="panel-title"><%- icon('tasks') %> Recently updated</h2>
+                <a href="/tasks/" class="panel-link">View all tasks</a>
+            </div>
+
+            <% if (recentTasks.length) { %>
+            <div class="card-grid card-grid-wide">
+            <% recentTasks.forEach(function (task) {
+                 const subs = task.subtaskList;
+                 const subsDone = subs.filter(function (x) { return x.status === 'completed'; }).length;
+                 const pct = subs.length ? Math.round(subsDone / subs.length * 100) : 0;
+                 const overdue = task.due_date && task.due_date < today && task.status !== 'completed' && task.status !== 'cancelled';
+                 // Everyone working on the task: assignee + subtask assignees
+                 const people = [];
+                 if (task.assigned_to) people.push(task.assigned_to);
+                 subs.forEach(function (x) {
+                     if (x.assigned_to && !people.some(function (p) { return p.id === x.assigned_to.id; })) people.push(x.assigned_to);
+                 });
+                 const names = people.map(function (p) { return p.username; }).join(', '); %>
+                <article class="item-card task-card-v2 <%= overdue ? 'is-overdue' : '' %>" style="--project: <%= projectColor(task.project_list.project.id) %>">
+                    <div class="item-card-top">
+                        <%- include('../partials/status_picker', { kind: 'task', record: task }) %>
+                        <span class="<%= priorityClass(task.priority) %>"><%= task.getPriorityDisplay() %></span>
+                    </div>
+                    <h3 class="item-card-title"><a href="/task/<%= task.id %>/"><%= task.title %></a></h3>
+                    <div class="item-card-sub"><%= task.project_list.project.name %> › <%= task.project_list.name %></div>
+
+                    <% if (subs.length) { %>
+                    <div class="item-card-progress">
+                        <div class="progress-row" style="margin: 0;">
+                            <span class="progress progress-sm" role="progressbar" aria-label="Subtasks completed"
+                                  aria-valuenow="<%= pct %>" aria-valuemin="0" aria-valuemax="100" style="margin: 0;">
+                                <span class="progress-bar" style="width: <%= pct %>%"></span>
+                            </span>
+                            <span class="progress-label"><%= subsDone %>/<%= subs.length %></span>
+                        </div>
+                        <span class="muted-sm">subtasks completed</span>
+                    </div>
+                    <% } else { %>
+                    <% } %>
+
+                    <% if (task.due_date || task.follow_up_date) { %>
+                    <dl class="item-card-dates">
+                        <% if (task.due_date) { %><div><dt>Due</dt><dd><%= formatDate(task.due_date) %><% if (overdue) { %> <span class="overdue">Overdue</span><% } %></dd></div><% } %>
+                        <% if (task.follow_up_date) { %><div><dt>Follow-up</dt><dd><%- include('../partials/followup', { date: task.follow_up_date, status: task.status }) %></dd></div><% } %>
+                    </dl>
+                    <% } %>
+
+                    <div class="item-card-foot">
+                        <% if (people.length) { %>
+                            <span class="team" title="<%= names %>" aria-label="Team: <%= names %>">
+                                <% people.slice(0, 4).forEach(function (p) { %>
+                                    <span class="avatar avatar-sm team-avatar"><%= p.username[0].toUpperCase() %></span>
+                                <% }) %>
+                                <% if (people.length > 4) { %><span class="avatar avatar-sm team-avatar team-more">+<%= people.length - 4 %></span><% } %>
+                                <span class="team-name"><%= people.length === 1 ? people[0].username : people.length + ' people' %></span>
+                            </span>
+                        <% } else { %>
+                            <span class="muted-sm">Unassigned</span>
+                        <% } %>
+
+                        <% if (subs.length) { %>
+                            <button type="button" class="subtask-toggle" aria-expanded="false"
+                                    aria-controls="subtasks-<%= task.id %>" title="Show subtasks">
+                                <span class="chevron" aria-hidden="true">▸</span>
+                                <span class="subtask-count"><%= subs.length %> subtasks</span>
+                            </button>
+                        <% } %>
+                    </div>
+
+                    <% if (subs.length) { %>
+                    <ul class="card-subtasks" id="subtasks-<%= task.id %>" hidden>
+                        <% subs.forEach(function (x) { const mine = x.assigned_to_id === user.id; %>
+                        <li class="<%= mine ? 'mine' : '' %>">
+                            <span class="card-subtask-title">
+                                <% if (canEditSubtask(x)) { %>
+                                    <a href="/subtask/<%= x.id %>/edit/"><%= x.title %></a>
+                                <% } else { %>
+                                    <%= x.title %>
+                                <% } %>
+                            </span>
+                            <span class="<%= statusClass(x.status) %>"><%= x.getStatusDisplay() %></span>
+                            <span class="card-subtask-meta">
+                                <%= x.assigned_to ? x.assigned_to.username : 'Unassigned' %><%= mine ? ' (you)' : '' %>
+                                · Due <%= formatDate(x.due_date) %>
+                            </span>
+                        </li>
+                        <% }) %>
+                    </ul>
+                    <% } %>
+                </article>
+            <% }) %>
+            </div>
+            <% } else { %>
+                <div class="empty-state">No tasks available.</div>
+            <% } %>
+        </section>
+
+        </div>
+
+        <section class="panel">
+            <div class="panel-head">
+                <h2 class="panel-title"><%- icon('projects') %> Projects</h2>
+                <a href="/projects/" class="panel-link">View all</a>
+            </div>
+
+            <% if (projects.length) { %>
+            <div class="project-grid">
+                <% projects.forEach(function (project) { %>
+                    <a href="/projects/<%= project.id %>/" class="project-card" style="--project: <%= projectColor(project.id) %>">
+                        <div class="project-card-head">
+                            <div class="project-name"><%= project.name %></div>
+                            <span class="<%= statusClass(project.status) %>"><%= project.getStatusDisplay() %></span>
+                        </div>
+                        <div class="project-description"><%= truncate(project.description || 'No description available.', 110) %></div>
+                        <div class="progress-row">
+                            <span class="progress" role="progressbar" aria-label="Project progress"
+                                  aria-valuenow="<%= project.progress %>" aria-valuemin="0" aria-valuemax="100">
+                                <span class="progress-bar" style="width: <%= project.progress %>%"></span>
+                            </span>
+                            <span class="progress-label"><%= project.progress %>%</span>
+                        </div>
+                        <div class="project-meta">
+                            <span><%= project.doneCount %>/<%= project.taskCount %> tasks done</span>
+                            <span><%= project.listCount %> lists</span>
+                        </div>
+                    </a>
+                <% }) %>
+            </div>
+            <% } else { %>
+                <div class="empty-state">No projects available.</div>
+            <% } %>
+        </section>
+    </div>
+
+    <!-- RIGHT COLUMN -->
+    <aside class="dash-side">
+        <section class="panel">
+            <div class="panel-head">
+                <h2 class="panel-title"><%- icon('dashboard') %> Tasks by status</h2>
+            </div>
+            <% if (stats.totalTasks) { %>
+                <div class="stacked-bar" aria-hidden="true">
+                    <% statusBreakdown.forEach(function (b) { if (b.count) { %>
+                        <span class="seg seg-<%= b.value %>" style="width: <%= b.percent %>%"></span>
+                    <% } }) %>
+                </div>
+                <ul class="breakdown">
+                    <% statusBreakdown.forEach(function (b) { %>
+                    <li>
+                        <a href="/tasks/?status=<%= b.value %>">
+                            <span class="dot seg-<%= b.value %>"></span>
+                            <span class="breakdown-label"><%= b.label %></span>
+                            <span class="breakdown-count"><%= b.count %></span>
+                        </a>
+                    </li>
+                    <% }) %>
+                </ul>
+            <% } else { %>
+                <div class="empty-state">No tasks yet.</div>
+            <% } %>
+        </section>
+
+        <section class="panel">
+            <div class="panel-head">
+                <h2 class="panel-title"><%- icon('calendar') %> Coming up</h2>
+            </div>
+            <% if (deadlines.length) { %>
+                <ul class="timeline">
+                    <% deadlines.forEach(function (d) {
+                         const verb = d.followUp ? 'Follow up' : 'Due';
+                         const late = d.followUp ? ' missed' : ' overdue';
+                         const when = d.days < 0 ? Math.abs(d.days) + (Math.abs(d.days) === 1 ? ' day' : ' days') + late
+                                   : d.days === 0 ? verb + ' today'
+                                   : d.days === 1 ? verb + ' tomorrow'
+                                   : verb + ' in ' + d.days + ' days';
+                         const tone = d.days < 0 ? 'late' : d.days <= 1 ? 'soon' : 'ok'; %>
+                    <li>
+                        <a href="<%= d.url %>" class="deadline">
+                            <span class="deadline-date tone-<%= tone %>">
+                                <span class="dd-day"><%= formatDate(d.due).split(' ')[1].replace(',', '') %></span>
+                                <span class="dd-mon"><%= formatDate(d.due).split(' ')[0] %></span>
+                            </span>
+                            <span class="deadline-body">
+                                <span class="deadline-title"><%= d.title %></span>
+                                <span class="deadline-meta"><%= d.kind %> in <%= d.project %></span>
+                                <span class="deadline-when tone-<%= tone %>"><%= when %></span>
+                            </span>
+                        </a>
+                    </li>
+                    <% }) %>
+                </ul>
+            <% } else { %>
+                <div class="empty-state">Nothing due or to follow up in the next 7 days.</div>
+            <% } %>
+        </section>
+
+        <section class="panel">
+            <div class="panel-head">
+                <h2 class="panel-title"><%- icon('activity') %> Recent activity</h2>
+            </div>
+            <% if (activity.length) { %>
+                <ul class="feed">
+                    <% activity.forEach(function (a) { %>
+                    <li>
+                        <span class="avatar avatar-sm"><%= a.user.username[0].toUpperCase() %></span>
+                        <span class="feed-body">
+                            <span class="feed-text">
+                                <strong><%= a.user.username %></strong>
+                                <%= a.action.toLowerCase() %>
+                                <% if (a.task) { %>
+                                    on <a href="/task/<%= a.task.id %>/"><%= a.task.title %></a>
+                                <% } %>
+                            </span>
+                            <span class="feed-time"><%= formatDateTime(a.created_at) %></span>
+                        </span>
+                    </li>
+                    <% }) %>
+                </ul>
+            <% } else { %>
+                <div class="empty-state">No activity yet.</div>
+            <% } %>
+        </section>
+    </aside>
+</div>

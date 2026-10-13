@@ -1,0 +1,20 @@
+<div class="breadcrumbs"><a href="/tasks/">Tasks</a> / New</div>
+
+<div class="page-header">
+    <h1 class="page-title" data-popup-title>New task</h1>
+</div>
+
+<div class="section" data-popup-body>
+    <% if (!fields[0].choices.length) { %>
+        <div class="empty-state">There are no project lists you can add tasks to yet. Ask an administrator to create a project and a list first.</div>
+    <% } else { %>
+    <form method="post" action="/tasks/new/">
+        <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+        <%- include('../partials/form-fields', { fields, values, errors }) %>
+        <div class="btn-row">
+            <button type="submit" class="btn btn-primary">Create task</button>
+            <a href="/tasks/" class="btn btn-secondary" data-popup-close>Cancel</a>
+        </div>
+    </form>
+    <% } %>
+</div>
